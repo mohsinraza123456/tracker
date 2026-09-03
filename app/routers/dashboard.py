@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import date, datetime, time, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Request
@@ -5,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.charts import COLOR_CLICKS, COLOR_CONVERSIONS, build_trend_chart
 from app.database import get_db
 from app.models import Campaign, Click, Conversion
 from app.stats import COUNTABLE_CLICK_FILTER
@@ -89,6 +91,34 @@ def dashboard(request: Request, start: str | None = None, end: str | None = None
         else (100.0 if totals["revenue"] else 0.0)
     )
 
+    # Daily buckets across all campaigns, for the trend charts. Two measures of very
+    # different scale (clicks vs. conversions) get two single-series charts rather
+    # than one dual-axis chart.
+    click_day_counts: dict[date, int] = defaultdict(int)
+    for (created_at,) in (
+        db.query(Click.created_at)
+        .filter(Click.created_at >= range_start, Click.created_at <= range_end, *COUNTABLE_CLICK_FILTER)
+        .all()
+    ):
+        click_day_counts[created_at.astimezone(timezone.utc).date()] += 1
+
+    conv_day_counts: dict[date, int] = defaultdict(int)
+    for (created_at,) in (
+        db.query(Conversion.created_at)
+        .join(Click, Conversion.click_id == Click.id)
+        .filter(Conversion.created_at >= range_start, Conversion.created_at <= range_end, *COUNTABLE_CLICK_FILTER)
+        .all()
+    ):
+        conv_day_counts[created_at.astimezone(timezone.utc).date()] += 1
+
+    clicks_series = []
+    conversions_series = []
+    day = start_date
+    while day <= end_date:
+        clicks_series.append((day, click_day_counts.get(day, 0)))
+        conversions_series.append((day, conv_day_counts.get(day, 0)))
+        day += timedelta(days=1)
+
     return templates.TemplateResponse(
         "dashboard.html",
         {
@@ -97,5 +127,7 @@ def dashboard(request: Request, start: str | None = None, end: str | None = None
             "totals": totals,
             "start": start_date.isoformat(),
             "end": end_date.isoformat(),
+            "clicks_chart_svg": build_trend_chart(clicks_series, COLOR_CLICKS),
+            "conversions_chart_svg": build_trend_chart(conversions_series, COLOR_CONVERSIONS),
         },
     )

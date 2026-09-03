@@ -14,6 +14,17 @@
   </div>
 </form>
 
+<div class="grid">
+  <div class="chart-card">
+    <h4>Clicks</h4>
+    {{ clicks_chart_svg | safe }}
+  </div>
+  <div class="chart-card">
+    <h4>Conversions</h4>
+    {{ conversions_chart_svg | safe }}
+  </div>
+</div>
+
 <div class="table-scroll">
 <table class="stats">
   <thead>
