@@ -7,39 +7,51 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <nav class="container-fluid">
-    <ul>
-      <li><a href="/" style="text-decoration:none;"><strong>📊 Yourselfmedia Tracker</strong></a></li>
-    </ul>
-    {% if request.session.get('user') %}
-    <ul>
-      <li><a href="/dashboard">Dashboard</a></li>
-      <li><a href="/reports">Reports</a></li>
-      <li><a href="/campaigns">Campaigns</a></li>
-      <li><a href="/traffic-sources">Traffic Sources</a></li>
-      <li><a href="/landing-pages">Landing Pages</a></li>
-      <li><a href="/offers">Offers</a></li>
-      <li><a href="/tracking-domains">Domains</a></li>
-      {% if request.session.get('is_admin') %}
-      <li><a href="/admin/users">Users</a></li>
-      {% endif %}
-    </ul>
-    <ul>
-      <li>{{ request.session.get('user') }} &middot; <a href="/logout">Log out</a></li>
-    </ul>
-    {% else %}
-    <ul>
-      <li><a href="/login">Log in</a></li>
-      <li><a href="/register" role="button">Register</a></li>
-    </ul>
+<body class="{{ 'app-shell' if request.session.get('user') else '' }}">
+{% if request.session.get('user') %}
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <a href="/">📊 Yourselfmedia<br>Tracker</a>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="/dashboard" class="{{ 'active' if request.url.path == '/dashboard' else '' }}">📊 Dashboard</a>
+    <a href="/reports" class="{{ 'active' if request.url.path.startswith('/reports') else '' }}">📈 Reports</a>
+    <a href="/campaigns" class="{{ 'active' if request.url.path.startswith('/campaigns') else '' }}">🚀 Campaigns</a>
+    <a href="/traffic-sources" class="{{ 'active' if request.url.path.startswith('/traffic-sources') else '' }}">📡 Traffic Sources</a>
+    <a href="/landing-pages" class="{{ 'active' if request.url.path.startswith('/landing-pages') else '' }}">📄 Landing Pages</a>
+    <a href="/offers" class="{{ 'active' if request.url.path.startswith('/offers') else '' }}">🎯 Offers</a>
+    <a href="/tracking-domains" class="{{ 'active' if request.url.path.startswith('/tracking-domains') else '' }}">🌐 Domains</a>
+    {% if request.session.get('is_admin') %}
+    <a href="/admin/users" class="{{ 'active' if request.url.path.startswith('/admin') else '' }}">👥 Users</a>
     {% endif %}
   </nav>
-  <main class="container">
-    {% if request.query_params.get('msg') %}
-      <div class="flash">{{ request.query_params.get('msg') }}</div>
-    {% endif %}
-    {% block content %}{% endblock %}
-  </main>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="avatar">{{ request.session.get('user')[0]|upper }}</div>
+      <div>
+        <div class="sidebar-username">{{ request.session.get('user') }}</div>
+        <div class="sidebar-role">{{ "Admin" if request.session.get('is_admin') else "Member" }}</div>
+      </div>
+    </div>
+    <a href="/logout" class="sidebar-logout">Log out</a>
+  </div>
+</aside>
+{% else %}
+<nav class="public-nav container-fluid">
+  <ul>
+    <li><a href="/" class="brand-link"><strong>📊 Yourselfmedia Tracker</strong></a></li>
+  </ul>
+  <ul>
+    <li><a href="/login">Log in</a></li>
+    <li><a href="/register" role="button">Register</a></li>
+  </ul>
+</nav>
+{% endif %}
+<main class="{{ 'app-main' if request.session.get('user') else 'container' }}">
+  {% if request.query_params.get('msg') %}
+    <div class="flash">{{ request.query_params.get('msg') }}</div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
 </body>
 </html>

@@ -5,6 +5,16 @@ from traffic sources through optional landing pages to offers, record
 conversions via pixel or server-to-server postback, and see cost/revenue/ROI
 per campaign.
 
+## Design
+
+Logged-in pages use a sidebar app-shell (`app/templates/base.html`) — nav on
+the left with active-state highlighting, KPI stat tiles and trend charts on
+the dashboard, a single indigo accent, and Pico CSS re-themed via
+`app/static/style.css` so most templates (forms, tables, cards, buttons)
+inherit the look automatically without per-template markup changes. Public
+pages (landing, login, register) get a simpler top-nav layout. The sidebar
+collapses to a wrapping top bar under 900px; verified down to 375px wide.
+
 ## Setup
 
 1. Start Postgres:
