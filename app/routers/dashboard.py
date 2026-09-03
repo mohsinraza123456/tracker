@@ -24,7 +24,7 @@ def _parse_date(value: str | None, fallback: date) -> date:
         return fallback
 
 
-@router.get("/")
+@router.get("/dashboard")
 def dashboard(request: Request, start: str | None = None, end: str | None = None, db: Session = Depends(get_db)):
     today = datetime.now(timezone.utc).date()
     start_date = _parse_date(start, today - timedelta(days=30))

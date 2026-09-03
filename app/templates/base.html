@@ -10,11 +10,11 @@
 <body>
   <nav class="container-fluid">
     <ul>
-      <li><strong>📊 Tracker</strong></li>
+      <li><a href="/" style="text-decoration:none;"><strong>📊 Tracker</strong></a></li>
     </ul>
     {% if request.session.get('user') %}
     <ul>
-      <li><a href="/">Dashboard</a></li>
+      <li><a href="/dashboard">Dashboard</a></li>
       <li><a href="/reports">Reports</a></li>
       <li><a href="/campaigns">Campaigns</a></li>
       <li><a href="/traffic-sources">Traffic Sources</a></li>
@@ -24,6 +24,11 @@
     </ul>
     <ul>
       <li>{{ request.session.get('user') }} &middot; <a href="/logout">Log out</a></li>
+    </ul>
+    {% else %}
+    <ul>
+      <li><a href="/login">Log in</a></li>
+      <li><a href="/register" role="button">Register</a></li>
     </ul>
     {% endif %}
   </nav>

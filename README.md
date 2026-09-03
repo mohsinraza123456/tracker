@@ -34,7 +34,8 @@ per campaign.
    The app runs `alembic upgrade head` on startup, so the database schema is
    always brought up to date automatically — no manual migration step needed.
 
-5. Open http://localhost:8000
+5. Open http://localhost:8000 — the public landing page. Register an account
+   or log in to reach the dashboard.
 
 ## Schema changes
 
@@ -53,11 +54,21 @@ existing rows), then restart the app to apply it, or run
 
 ## How it works
 
-- **Login**: the dashboard and all admin pages require a login
-  (`ADMIN_USERNAME`/`ADMIN_PASSWORD` from `.env`, default `admin`/`admin` if
-  unset — change this before running anywhere but your own machine). The
-  tracking endpoints (`/click`, `/go`, `/conv`, `/postback`) stay public since
-  traffic sources and offers need to hit them without a session.
+- **Landing page & accounts**: `/` is a public marketing page for the tool
+  itself, with Login and Register buttons. Anyone who registers (username +
+  password, hashed with PBKDF2 — never stored in plain text) gets their own
+  login to the **same shared workspace** — this is a multi-user tool for a
+  team sharing one tracker instance, not multi-tenant; every account sees
+  the same campaigns, traffic sources, etc. There's no per-account data
+  isolation and no user-management UI yet (no way to list/delete users from
+  the app — do that directly in the `users` table if needed).
+- **Login**: the dashboard (`/dashboard`) and all admin pages require a
+  login. The `ADMIN_USERNAME`/`ADMIN_PASSWORD` env-var credential (default
+  `admin`/`admin` if unset — change this before running anywhere but your
+  own machine) always works too, as a break-glass account alongside
+  registered users. The tracking endpoints (`/click`, `/go`, `/conv`,
+  `/postback`) stay public since traffic sources and offers need to hit them
+  without a session.
 - **Traffic Sources**: where clicks come from, with a cost model (manual or
   cost-per-click).
 - **Landing Pages** (optional): pre-landers. On the landing page, link onward

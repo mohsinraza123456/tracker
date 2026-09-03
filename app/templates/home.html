@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Tracker — Performance Marketing Click Tracker{% endblock %}
+{% block content %}
+<section style="text-align:center; padding: 3rem 0 1rem;">
+  <h1>Track. Test. Optimize.</h1>
+  <p style="font-size:1.15rem; color:var(--pico-muted-color); max-width:640px; margin:0 auto 2rem;">
+    A self-hosted click tracker for performance marketers &mdash; route traffic through
+    split-tested landing pages and offers, filter out bots, and see exactly which
+    variant is winning.
+  </p>
+  {% if request.session.get('user') %}
+  <a href="/dashboard" role="button">Go to Dashboard</a>
+  {% else %}
+  <a href="/register" role="button">Get Started &mdash; Register</a>
+  <a href="/login" role="button" class="secondary">Log in</a>
+  {% endif %}
+</section>
+
+<section class="grid" style="margin-top:2rem;">
+  <article>
+    <h3>Split Testing</h3>
+    <p>Rotate traffic across weighted landing pages and offers, and see clicks, conversions, and ROI broken down per variant.</p>
+  </article>
+  <article>
+    <h3>GEO &amp; Device Tracking</h3>
+    <p>Every click is enriched with country, region, city, device, OS, and browser &mdash; sliceable in Reports.</p>
+  </article>
+  <article>
+    <h3>Bot &amp; Duplicate Filtering</h3>
+    <p>Known bots, script clients, and rapid double-clicks are flagged and excluded from stats automatically.</p>
+  </article>
+</section>
+
+<section class="grid">
+  <article>
+    <h3>S2S Postback &amp; Pixel</h3>
+    <p>Track conversions via server-to-server postback or pixel, with dedupe support for repeated fires.</p>
+  </article>
+  <article>
+    <h3>Dynamic URL Macros</h3>
+    <p>Pass country, device, sub-ids, and more straight into your offer or landing page URLs.</p>
+  </article>
+  <article>
+    <h3>Reports &amp; CSV Export</h3>
+    <p>Break down performance by any dimension and export it, or watch clicks and conversions trend over time.</p>
+  </article>
+</section>
+{% endblock %}

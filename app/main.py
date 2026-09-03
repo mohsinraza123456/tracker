@@ -9,6 +9,7 @@ from app.config import SECRET_KEY
 from app.routers import (
     campaigns,
     dashboard,
+    home,
     landing_pages,
     login,
     offers,
@@ -27,7 +28,9 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax")
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# Public: traffic sources and offers hit these directly, and the login page itself.
+# Public: the landing page, login/register, and the tracking endpoints traffic
+# sources and offers hit directly.
+app.include_router(home.router)
 app.include_router(login.router)
 app.include_router(tracking.router)
 
