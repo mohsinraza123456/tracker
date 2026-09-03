@@ -9,7 +9,7 @@
   <label>URL
     <input type="url" name="url" required value="{{ offer.url if offer else '' }}" placeholder="https://example.com/offer?clickid={clickid}">
   </label>
-  <small>Use the literal token <code>{clickid}</code> in the URL if the offer needs the click id embedded; otherwise it's appended as <code>?clickid=</code>.</small>
+  <small>Macros available in the URL: <code>{clickid}</code>, <code>{country}</code>, <code>{region}</code>, <code>{city}</code>, <code>{device}</code>, <code>{os}</code>, <code>{browser}</code>, <code>{sub1}</code>&ndash;<code>{sub5}</code>. If <code>{clickid}</code> isn't used, it's appended as <code>?clickid=</code>.</small>
   <label>Default payout ($)
     <input type="number" step="0.01" min="0" name="payout" value="{{ offer.payout if offer else 0 }}">
   </label>

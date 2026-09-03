@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit" if domain else "New" }} Tracking Domain{% endblock %}
+{% block content %}
+<h2>{{ "Edit" if domain else "New" }} Tracking Domain</h2>
+<form method="post" action="{{ '/tracking-domains/%d/edit' % domain.id if domain else '/tracking-domains/new' }}">
+  <label>Domain (full origin, no path)
+    <input type="text" name="domain" required value="{{ domain.domain if domain else '' }}" placeholder="https://track.example.com">
+  </label>
+  <label>Notes
+    <textarea name="notes">{{ domain.notes if domain else '' }}</textarea>
+  </label>
+  <button type="submit">Save</button>
+  <a href="/tracking-domains" role="button" class="secondary">Cancel</a>
+</form>
+{% endblock %}

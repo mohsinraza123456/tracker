@@ -6,7 +6,17 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.auth import require_login
 from app.config import SECRET_KEY
-from app.routers import campaigns, dashboard, landing_pages, login, offers, reports, traffic_sources, tracking
+from app.routers import (
+    campaigns,
+    dashboard,
+    landing_pages,
+    login,
+    offers,
+    reports,
+    traffic_sources,
+    tracking,
+    tracking_domains,
+)
 
 # Schema is owned by Alembic migrations (alembic/versions/) — bring the database up to
 # date on startup rather than requiring a manual `alembic upgrade head` step.
@@ -29,3 +39,4 @@ app.include_router(campaigns.router, dependencies=protected)
 app.include_router(traffic_sources.router, dependencies=protected)
 app.include_router(landing_pages.router, dependencies=protected)
 app.include_router(offers.router, dependencies=protected)
+app.include_router(tracking_domains.router, dependencies=protected)

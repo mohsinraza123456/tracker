@@ -56,6 +56,21 @@ class Offer(Base):
     campaign_links: Mapped[list["CampaignOffer"]] = relationship(back_populates="offer")
 
 
+class TrackingDomain(Base):
+    """A domain the operator has pointed at this app (via their own DNS/reverse proxy),
+    so campaigns can display tracking links on more than one hostname."""
+
+    __tablename__ = "tracking_domains"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # full origin, e.g. "https://track.example.com" — no path or trailing slash
+    domain: Mapped[str] = mapped_column(String(255), nullable=False)
+    notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+    campaigns: Mapped[list["Campaign"]] = relationship(back_populates="tracking_domain")
+
+
 class Campaign(Base):
     __tablename__ = "campaigns"
 
@@ -64,13 +79,20 @@ class Campaign(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     traffic_source_id: Mapped[int] = mapped_column(ForeignKey("traffic_sources.id"))
+    tracking_domain_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tracking_domains.id"), nullable=True
+    )
 
     # overrides the traffic source's default cost-per-click when set
     cost_override: Mapped[float | None] = mapped_column(Float, nullable=True)
 
+    # if set, clicks flagged as bot traffic are sent here instead of the real offer
+    bot_redirect_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     traffic_source: Mapped["TrafficSource"] = relationship(back_populates="campaigns")
+    tracking_domain: Mapped["TrackingDomain | None"] = relationship(back_populates="campaigns")
     clicks: Mapped[list["Click"]] = relationship(back_populates="campaign")
 
     # split-test variants: each campaign rotates across these by weight

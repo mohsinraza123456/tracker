@@ -1,6 +1,9 @@
 import random
-from typing import TypeVar
-from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse
+from typing import TYPE_CHECKING, TypeVar
+from urllib.parse import quote, urlencode, urlparse, parse_qsl, urlunparse
+
+if TYPE_CHECKING:
+    from app.models import Click
 
 T = TypeVar("T")
 
@@ -20,19 +23,43 @@ def weighted_choice(options: list[tuple[T, int]]) -> T | None:
     return positive[-1][0]
 
 
-def build_redirect_url(target_url: str, click_id: str) -> str:
-    """Append the click id to a destination URL so it can be echoed back on conversion.
+def build_redirect_url(target_url: str, click: "Click") -> str:
+    """Substitute {clickid} and any other {macro} tokens found in a destination URL
+    with data from this click, then append clickid as a query param if {clickid}
+    wasn't used explicitly.
 
-    If the URL contains a literal "{clickid}" token, substitute it in place
-    (useful when an offer requires the id inside the path). Otherwise append
-    it as a `clickid` query parameter.
+    Available macros: {clickid}, {country}, {region}, {city}, {device}, {os},
+    {browser}, {sub1}..{sub5}. Unrecognized {tokens} are left untouched.
     """
-    if "{clickid}" in target_url:
-        return target_url.replace("{clickid}", click_id)
+    macros = {
+        "{clickid}": str(click.id),
+        "{country}": click.country or "",
+        "{region}": click.region or "",
+        "{city}": click.city or "",
+        "{device}": click.device_type or "",
+        "{os}": click.os or "",
+        "{browser}": click.browser or "",
+        "{sub1}": click.sub1 or "",
+        "{sub2}": click.sub2 or "",
+        "{sub3}": click.sub3 or "",
+        "{sub4}": click.sub4 or "",
+        "{sub5}": click.sub5 or "",
+    }
 
-    parsed = urlparse(target_url)
+    result = target_url
+    used_clickid_macro = False
+    for token, value in macros.items():
+        if token in result:
+            result = result.replace(token, quote(value, safe=""))
+            if token == "{clickid}":
+                used_clickid_macro = True
+
+    if used_clickid_macro:
+        return result
+
+    parsed = urlparse(result)
     query = dict(parse_qsl(parsed.query))
-    query["clickid"] = click_id
+    query["clickid"] = str(click.id)
     new_query = urlencode(query)
     return urlunparse(parsed._replace(query=new_query))
 

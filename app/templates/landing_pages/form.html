@@ -9,7 +9,8 @@
   <label>URL
     <input type="url" name="url" required value="{{ lp.url if lp else '' }}" placeholder="https://example.com/lander">
   </label>
-  <small>On this page, link visitors onward using <code>{base_url}/go/{clickid}</code> so the tracker can hand them off to the offer.</small>
+  <small>On this page, link visitors onward using <code>{base_url}/go/{clickid}</code> so the tracker can hand them off to the offer.
+  The URL above also accepts macros — <code>{clickid}</code>, <code>{country}</code>, <code>{region}</code>, <code>{city}</code>, <code>{device}</code>, <code>{os}</code>, <code>{browser}</code>, <code>{sub1}</code>&ndash;<code>{sub5}</code> — if you want visitor data passed straight to the landing page too.</small>
   <br><br>
   <button type="submit">Save</button>
   <a href="/landing-pages" role="button" class="secondary">Cancel</a>

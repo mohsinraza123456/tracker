@@ -14,6 +14,7 @@ from app.models import (
     Conversion,
     LandingPage,
     Offer,
+    TrackingDomain,
     TrafficSource,
 )
 from app.stats import COUNTABLE_CLICK_FILTER, aggregate_clicks
@@ -94,6 +95,7 @@ def new_campaign_form(request: Request, db: Session = Depends(get_db)):
             "traffic_sources": db.query(TrafficSource).order_by(TrafficSource.name).all(),
             "landing_pages": db.query(LandingPage).order_by(LandingPage.name).all(),
             "offers": db.query(Offer).order_by(Offer.name).all(),
+            "tracking_domains": db.query(TrackingDomain).order_by(TrackingDomain.domain).all(),
             "existing_lp_weights": {},
             "existing_offer_weights": {},
         },
@@ -104,10 +106,14 @@ def new_campaign_form(request: Request, db: Session = Depends(get_db)):
 async def create_campaign(request: Request, db: Session = Depends(get_db)):
     form = await request.form()
     cost_override = form.get("cost_override") or ""
+    tracking_domain_id = form.get("tracking_domain_id") or ""
+    bot_redirect_url = form.get("bot_redirect_url") or ""
     campaign = Campaign(
         name=form.get("name", "").strip(),
         traffic_source_id=int(form.get("traffic_source_id")),
+        tracking_domain_id=int(tracking_domain_id) if tracking_domain_id else None,
         cost_override=float(cost_override) if cost_override else None,
+        bot_redirect_url=bot_redirect_url or None,
         is_active=form.get("is_active") == "on",
     )
     db.add(campaign)
@@ -131,6 +137,7 @@ def campaign_detail(campaign_id: int, request: Request, db: Session = Depends(ge
         .options(
             joinedload(Campaign.campaign_landing_pages).joinedload(CampaignLandingPage.landing_page),
             joinedload(Campaign.campaign_offers).joinedload(CampaignOffer.offer),
+            joinedload(Campaign.tracking_domain),
         )
         .filter(Campaign.id == campaign_id)
         .first()
@@ -187,7 +194,7 @@ def campaign_detail(campaign_id: int, request: Request, db: Session = Depends(ge
             "offer_rows": offer_rows,
             "lp_rows": lp_rows,
             "excluded_count": excluded_count,
-            "base_url": BASE_URL,
+            "base_url": campaign.tracking_domain.domain if campaign.tracking_domain else BASE_URL,
         },
     )
 
@@ -213,6 +220,7 @@ def edit_campaign_form(campaign_id: int, request: Request, db: Session = Depends
             "traffic_sources": db.query(TrafficSource).order_by(TrafficSource.name).all(),
             "landing_pages": db.query(LandingPage).order_by(LandingPage.name).all(),
             "offers": db.query(Offer).order_by(Offer.name).all(),
+            "tracking_domains": db.query(TrackingDomain).order_by(TrackingDomain.domain).all(),
             "existing_lp_weights": {clp.landing_page_id: clp.weight for clp in campaign.campaign_landing_pages},
             "existing_offer_weights": {co.offer_id: co.weight for co in campaign.campaign_offers},
         },
@@ -227,9 +235,13 @@ async def update_campaign(campaign_id: int, request: Request, db: Session = Depe
 
     form = await request.form()
     cost_override = form.get("cost_override") or ""
+    tracking_domain_id = form.get("tracking_domain_id") or ""
+    bot_redirect_url = form.get("bot_redirect_url") or ""
     campaign.name = form.get("name", "").strip()
     campaign.traffic_source_id = int(form.get("traffic_source_id"))
+    campaign.tracking_domain_id = int(tracking_domain_id) if tracking_domain_id else None
     campaign.cost_override = float(cost_override) if cost_override else None
+    campaign.bot_redirect_url = bot_redirect_url or None
     campaign.is_active = form.get("is_active") == "on"
 
     db.query(CampaignLandingPage).filter(CampaignLandingPage.campaign_id == campaign.id).delete()

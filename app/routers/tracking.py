@@ -88,10 +88,14 @@ def track_click(campaign_id: int, request: Request, db: Session = Depends(get_db
     db.commit()
     db.refresh(click)
 
-    if click.landing_page:
-        destination = build_redirect_url(click.landing_page.url, str(click.id))
+    if click.is_bot and campaign.bot_redirect_url:
+        # Don't waste the real funnel on suspected bot traffic — send it elsewhere
+        # entirely, skipping any landing page.
+        destination = build_redirect_url(campaign.bot_redirect_url, click)
+    elif click.landing_page:
+        destination = build_redirect_url(click.landing_page.url, click)
     else:
-        destination = build_redirect_url(click.offer.url, str(click.id))
+        destination = build_redirect_url(click.offer.url, click)
 
     return RedirectResponse(url=destination, status_code=302)
 
@@ -103,7 +107,7 @@ def continue_to_offer(click_id: uuid.UUID, db: Session = Depends(get_db)):
     if not click or not click.offer:
         raise HTTPException(status_code=404, detail="Unknown click id")
 
-    destination = build_redirect_url(click.offer.url, str(click.id))
+    destination = build_redirect_url(click.offer.url, click)
     return RedirectResponse(url=destination, status_code=302)
 
 

@@ -62,9 +62,17 @@ existing rows), then restart the app to apply it, or run
   cost-per-click).
 - **Landing Pages** (optional): pre-landers. On the landing page, link onward
   to `{base_url}/go/{clickid}` to hand the visitor to the offer.
-- **Offers**: the final destination and its payout. Use the token `{clickid}`
-  in the offer URL if it needs to be embedded in the path, otherwise it's
-  appended as `?clickid=`.
+- **Offers**: the final destination and its payout. The URL accepts macros —
+  `{clickid}`, `{country}`, `{region}`, `{city}`, `{device}`, `{os}`,
+  `{browser}`, `{sub1}`–`{sub5}` — substituted from the visitor's click data.
+  If `{clickid}` isn't used explicitly, it's appended as `?clickid=`. Landing
+  page URLs accept the same macros.
+- **Tracking domains**: optionally give a campaign's tracking link a domain
+  other than the default `BASE_URL` (manage under Domains). This only
+  changes what link is *displayed* — you still have to point that domain at
+  this server yourself via DNS/reverse proxy; the app answers the same
+  regardless of which hostname a request arrives on. Useful for spreading
+  risk across domains rather than one domain absorbing all of it.
 - **Campaigns**: combine a traffic source + a weighted rotation of offers
   (and optionally landing pages) into one trackable link:
   `{base_url}/click/{campaign_id}`. Put that link at your traffic source (ad
@@ -92,4 +100,8 @@ existing rows), then restart the app to apply it, or run
   but excluded from every stats view and from cost, so they can't inflate
   click counts or corrupt split-test ROI. A duplicate click reuses whichever
   offer/landing page the original click got, so a real visitor double-clicking
-  never gets bounced to a different split-test variant.
+  never gets bounced to a different split-test variant. Optionally, a
+  campaign can set a **bot redirect URL** — clicks flagged as bot traffic are
+  sent there instead of the real offer/landing page, protecting the offer
+  relationship from suspicious traffic. Leave it blank to keep the default
+  behavior (bot clicks still reach the offer, just excluded from stats).

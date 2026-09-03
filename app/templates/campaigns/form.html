@@ -16,9 +16,24 @@
     </select>
   </label>
 
+  <label>Tracking domain (optional)
+    <select name="tracking_domain_id">
+      <option value="">— default base URL —</option>
+      {% for td in tracking_domains %}
+      <option value="{{ td.id }}" {{ "selected" if campaign and campaign.tracking_domain_id == td.id }}>{{ td.domain }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <small>Manage available domains under <a href="/tracking-domains">Domains</a>.</small>
+
   <label>Cost per click override (optional, $)
     <input type="number" step="0.0001" min="0" name="cost_override" value="{{ campaign.cost_override if campaign and campaign.cost_override is not none else '' }}">
   </label>
+
+  <label>Bot redirect URL (optional)
+    <input type="url" name="bot_redirect_url" value="{{ campaign.bot_redirect_url if campaign and campaign.bot_redirect_url else '' }}" placeholder="https://example.com/no-bots-here">
+  </label>
+  <small>If set, clicks flagged as bot traffic are sent here instead of your real offer — protects the offer from suspicious traffic. Leave blank to just exclude bot clicks from stats (current default behavior).</small>
 
   <label>
     <input type="checkbox" name="is_active" {{ "checked" if not campaign or campaign.is_active }}>
