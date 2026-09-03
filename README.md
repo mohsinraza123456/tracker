@@ -1,4 +1,4 @@
-# Tracker
+# Yourselfmedia Tracker
 
 A self-hosted performance-marketing click tracker (à la CPV Lab): track clicks
 from traffic sources through optional landing pages to offers, record
@@ -69,9 +69,14 @@ existing rows), then restart the app to apply it, or run
   admin rights, or delete an account (cascades — removes everything that
   account owns, including its click/conversion history). At least one admin
   must always remain — the last admin can't be demoted or deleted, and no
-  one can delete their own account from this panel. The tracking endpoints
-  (`/click`, `/go`, `/conv`, `/postback`) stay public and un-scoped since
-  traffic sources and offers need to hit them without a session.
+  one can delete their own account from this panel. An admin can also
+  **create accounts directly** (Manage Users → + Add User) — sets the
+  username/password (and optionally admin rights) themselves, rather than
+  waiting for someone to self-register; same validation rules as public
+  registration (`app/user_validation.py`, shared by both paths). The
+  tracking endpoints (`/click`, `/go`, `/conv`, `/postback`) stay public and
+  un-scoped since traffic sources and offers need to hit them without a
+  session.
 - **Traffic Sources**: where clicks come from, with a cost model (manual or
   cost-per-click).
 - **Landing Pages** (optional): pre-landers. On the landing page, link onward

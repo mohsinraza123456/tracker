@@ -11,6 +11,7 @@ from app.config import ADMIN_PASSWORD, ADMIN_USERNAME
 from app.database import get_db
 from app.models import User
 from app.passwords import hash_password, verify_password
+from app.user_validation import validate_new_account
 
 router = APIRouter(tags=["auth"])
 templates = Jinja2Templates(directory="app/templates")
@@ -83,18 +84,7 @@ async def register_submit(request: Request, db: Session = Depends(get_db)):
     password = form.get("password") or ""
     confirm = form.get("confirm") or ""
 
-    error = None
-    if len(username) < 3:
-        error = "Username must be at least 3 characters."
-    elif len(password) < 8:
-        error = "Password must be at least 8 characters."
-    elif password != confirm:
-        error = "Passwords don't match."
-    elif hmac.compare_digest(username, ADMIN_USERNAME):
-        error = "That username is reserved."
-    elif db.query(User).filter(User.username == username).first():
-        error = "That username is already taken."
-
+    error = validate_new_account(db, username, password, confirm)
     if error:
         return templates.TemplateResponse(
             "register.html", {"request": request, "error": error}, status_code=400

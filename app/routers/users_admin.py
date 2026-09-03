@@ -2,12 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.auth import require_admin
 from app.database import get_db
 from app.models import Campaign, LandingPage, Offer, TrackingDomain, TrafficSource, User
+from app.passwords import hash_password
 from app.routers.campaigns import delete_campaign_cascade
+from app.user_validation import validate_new_account
 
 router = APIRouter(prefix="/admin/users", tags=["admin-users"])
 templates = Jinja2Templates(directory="app/templates")
@@ -30,6 +33,40 @@ def list_users(request: Request, db: Session = Depends(get_db), current_user: Us
             "admin_count": admin_count,
         },
     )
+
+
+@router.get("/new")
+def new_user_form(request: Request, current_user: User = Depends(require_admin)):
+    return templates.TemplateResponse("admin/user_form.html", {"request": request, "error": None})
+
+
+@router.post("/new")
+async def create_user(request: Request, db: Session = Depends(get_db), current_user: User = Depends(require_admin)):
+    form = await request.form()
+    username = (form.get("username") or "").strip()
+    password = form.get("password") or ""
+    confirm = form.get("confirm") or ""
+    make_admin = form.get("is_admin") == "on"
+
+    error = validate_new_account(db, username, password, confirm)
+    if error:
+        return templates.TemplateResponse(
+            "admin/user_form.html", {"request": request, "error": error}, status_code=400
+        )
+
+    user = User(username=username, password_hash=hash_password(password), is_admin=make_admin)
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        return templates.TemplateResponse(
+            "admin/user_form.html",
+            {"request": request, "error": "That username is already taken."},
+            status_code=400,
+        )
+
+    return RedirectResponse(url="/admin/users?msg=User created", status_code=303)
 
 
 @router.get("/{user_id}/toggle-admin")

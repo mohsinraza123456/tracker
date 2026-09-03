@@ -23,7 +23,7 @@ from app.routers import (
 # date on startup rather than requiring a manual `alembic upgrade head` step.
 command.upgrade(Config("alembic.ini"), "head")
 
-app = FastAPI(title="Tracker")
+app = FastAPI(title="Yourselfmedia Tracker")
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax")
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
