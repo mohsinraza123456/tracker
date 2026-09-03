@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Manage Users{% endblock %}
+{% block content %}
+<hgroup>
+  <h2>Manage Users</h2>
+  <p>Everyone here shares one tracker workspace, but each account owns its own campaigns, traffic sources, offers, landing pages, and tracking domains.</p>
+</hgroup>
+
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Username</th><th>Role</th><th>Campaigns</th><th>Joined</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.username }}{{ " (you)" if u.id == current_user.id else "" }}</td>
+      <td>
+        {% if u.is_admin %}<span class="badge badge-active">Admin</span>
+        {% else %}<span class="badge badge-inactive">Member</span>{% endif %}
+      </td>
+      <td>{{ campaign_counts.get(u.id, 0) }}</td>
+      <td>{{ u.created_at.strftime("%Y-%m-%d") }}</td>
+      <td class="actions">
+        {% if u.id != current_user.id %}
+        <a href="/admin/users/{{ u.id }}/toggle-admin" onclick="return confirm('{{ 'Remove admin rights from' if u.is_admin else 'Make' }} {{ u.username }}{{ '' if u.is_admin else ' an admin' }}?')">
+          {{ "Remove admin" if u.is_admin else "Make admin" }}
+        </a>
+        <a href="/admin/users/{{ u.id }}/delete" onclick="return confirm('Delete {{ u.username }} and everything they own — campaigns, offers, traffic sources, landing pages, tracking domains, and all click history? This cannot be undone.')">Delete</a>
+        {% else %}
+        <small><em>&mdash;</em></small>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

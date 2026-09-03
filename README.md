@@ -57,18 +57,21 @@ existing rows), then restart the app to apply it, or run
 - **Landing page & accounts**: `/` is a public marketing page for the tool
   itself, with Login and Register buttons. Anyone who registers (username +
   password, hashed with PBKDF2 — never stored in plain text) gets their own
-  login to the **same shared workspace** — this is a multi-user tool for a
-  team sharing one tracker instance, not multi-tenant; every account sees
-  the same campaigns, traffic sources, etc. There's no per-account data
-  isolation and no user-management UI yet (no way to list/delete users from
-  the app — do that directly in the `users` table if needed).
-- **Login**: the dashboard (`/dashboard`) and all admin pages require a
-  login. The `ADMIN_USERNAME`/`ADMIN_PASSWORD` env-var credential (default
-  `admin`/`admin` if unset — change this before running anywhere but your
-  own machine) always works too, as a break-glass account alongside
-  registered users. The tracking endpoints (`/click`, `/go`, `/conv`,
-  `/postback`) stay public since traffic sources and offers need to hit them
-  without a session.
+  **isolated** account: campaigns, traffic sources, offers, landing pages,
+  and tracking domains are all owned per-user, and one account can never see
+  or reference another's. This is multi-tenant, not a shared workspace.
+- **Login & admin**: the dashboard (`/dashboard`) and all admin pages
+  require a login. The `ADMIN_USERNAME`/`ADMIN_PASSWORD` env-var credential
+  (default `admin`/`admin` if unset — change this before running anywhere
+  but your own machine) always works too, as a break-glass account with its
+  own owned data like any other user, and it's always an admin. An admin can
+  manage accounts under **Users** (nav link, admin-only): promote/demote
+  admin rights, or delete an account (cascades — removes everything that
+  account owns, including its click/conversion history). At least one admin
+  must always remain — the last admin can't be demoted or deleted, and no
+  one can delete their own account from this panel. The tracking endpoints
+  (`/click`, `/go`, `/conv`, `/postback`) stay public and un-scoped since
+  traffic sources and offers need to hit them without a session.
 - **Traffic Sources**: where clicks come from, with a cost model (manual or
   cost-per-click).
 - **Landing Pages** (optional): pre-landers. On the landing page, link onward

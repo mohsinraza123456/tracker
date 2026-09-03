@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
+from app.auth import get_current_user
 from app.config import BASE_URL
 from app.database import get_db
 from app.models import (
@@ -16,6 +17,7 @@ from app.models import (
     Offer,
     TrackingDomain,
     TrafficSource,
+    User,
 )
 from app.stats import COUNTABLE_CLICK_FILTER, aggregate_clicks
 
@@ -52,9 +54,12 @@ def _campaign_stats(db: Session, campaign: Campaign) -> dict:
     }
 
 
-def _apply_variants(db: Session, campaign: Campaign, form, prefix: str, assoc_model, id_field: str) -> int:
+def _apply_variants(
+    db: Session, campaign: Campaign, form, prefix: str, assoc_model, id_field: str, owned_ids: set[int]
+) -> int:
     """Read `{prefix}{id}` weight fields from a submitted form and (re)create variant rows.
-    Returns the number of variants created (weight > 0)."""
+    Ids outside `owned_ids` are silently skipped (e.g. a crafted request referencing
+    another user's landing page/offer). Returns the number of variants created."""
     count = 0
     for key, raw_value in form.multi_items():
         if not key.startswith(prefix):
@@ -65,20 +70,31 @@ def _apply_variants(db: Session, campaign: Campaign, form, prefix: str, assoc_mo
             item_id = int(item_id)
         except ValueError:
             continue
-        if weight > 0:
+        if weight > 0 and item_id in owned_ids:
             db.add(assoc_model(campaign_id=campaign.id, weight=weight, **{id_field: item_id}))
             count += 1
     return count
 
 
+def delete_campaign_cascade(db: Session, campaign: Campaign) -> None:
+    """Delete a campaign and everything that references it. Does not commit —
+    callers commit once, whether deleting one campaign or cascading a whole user."""
+    db.query(Conversion).filter(
+        Conversion.click_id.in_(db.query(Click.id).filter(Click.campaign_id == campaign.id))
+    ).delete(synchronize_session=False)
+    db.query(Click).filter(Click.campaign_id == campaign.id).delete(synchronize_session=False)
+    db.delete(campaign)
+
+
 @router.get("")
-def list_campaigns(request: Request, db: Session = Depends(get_db)):
+def list_campaigns(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     campaigns = (
         db.query(Campaign)
         .options(
             joinedload(Campaign.campaign_landing_pages).joinedload(CampaignLandingPage.landing_page),
             joinedload(Campaign.campaign_offers).joinedload(CampaignOffer.offer),
         )
+        .filter(Campaign.user_id == current_user.id)
         .order_by(Campaign.name)
         .all()
     )
@@ -86,16 +102,16 @@ def list_campaigns(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/new")
-def new_campaign_form(request: Request, db: Session = Depends(get_db)):
+def new_campaign_form(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return templates.TemplateResponse(
         "campaigns/form.html",
         {
             "request": request,
             "campaign": None,
-            "traffic_sources": db.query(TrafficSource).order_by(TrafficSource.name).all(),
-            "landing_pages": db.query(LandingPage).order_by(LandingPage.name).all(),
-            "offers": db.query(Offer).order_by(Offer.name).all(),
-            "tracking_domains": db.query(TrackingDomain).order_by(TrackingDomain.domain).all(),
+            "traffic_sources": db.query(TrafficSource).filter(TrafficSource.user_id == current_user.id).order_by(TrafficSource.name).all(),
+            "landing_pages": db.query(LandingPage).filter(LandingPage.user_id == current_user.id).order_by(LandingPage.name).all(),
+            "offers": db.query(Offer).filter(Offer.user_id == current_user.id).order_by(Offer.name).all(),
+            "tracking_domains": db.query(TrackingDomain).filter(TrackingDomain.user_id == current_user.id).order_by(TrackingDomain.domain).all(),
             "existing_lp_weights": {},
             "existing_offer_weights": {},
         },
@@ -103,14 +119,27 @@ def new_campaign_form(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("/new")
-async def create_campaign(request: Request, db: Session = Depends(get_db)):
+async def create_campaign(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     form = await request.form()
-    cost_override = form.get("cost_override") or ""
+
+    traffic_source_id = int(form.get("traffic_source_id"))
+    if not db.query(TrafficSource).filter(
+        TrafficSource.id == traffic_source_id, TrafficSource.user_id == current_user.id
+    ).first():
+        raise HTTPException(status_code=400, detail="Unknown traffic source")
+
     tracking_domain_id = form.get("tracking_domain_id") or ""
+    if tracking_domain_id and not db.query(TrackingDomain).filter(
+        TrackingDomain.id == int(tracking_domain_id), TrackingDomain.user_id == current_user.id
+    ).first():
+        raise HTTPException(status_code=400, detail="Unknown tracking domain")
+
+    cost_override = form.get("cost_override") or ""
     bot_redirect_url = form.get("bot_redirect_url") or ""
     campaign = Campaign(
+        user_id=current_user.id,
         name=form.get("name", "").strip(),
-        traffic_source_id=int(form.get("traffic_source_id")),
+        traffic_source_id=traffic_source_id,
         tracking_domain_id=int(tracking_domain_id) if tracking_domain_id else None,
         cost_override=float(cost_override) if cost_override else None,
         bot_redirect_url=bot_redirect_url or None,
@@ -119,8 +148,10 @@ async def create_campaign(request: Request, db: Session = Depends(get_db)):
     db.add(campaign)
     db.flush()
 
-    _apply_variants(db, campaign, form, "lp_weight_", CampaignLandingPage, "landing_page_id")
-    offer_count = _apply_variants(db, campaign, form, "offer_weight_", CampaignOffer, "offer_id")
+    owned_lp_ids = {lp.id for lp in db.query(LandingPage.id).filter(LandingPage.user_id == current_user.id)}
+    owned_offer_ids = {o.id for o in db.query(Offer.id).filter(Offer.user_id == current_user.id)}
+    _apply_variants(db, campaign, form, "lp_weight_", CampaignLandingPage, "landing_page_id", owned_lp_ids)
+    offer_count = _apply_variants(db, campaign, form, "offer_weight_", CampaignOffer, "offer_id", owned_offer_ids)
 
     if offer_count == 0:
         db.rollback()
@@ -131,7 +162,7 @@ async def create_campaign(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/{campaign_id}")
-def campaign_detail(campaign_id: int, request: Request, db: Session = Depends(get_db)):
+def campaign_detail(campaign_id: int, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     campaign = (
         db.query(Campaign)
         .options(
@@ -139,7 +170,7 @@ def campaign_detail(campaign_id: int, request: Request, db: Session = Depends(ge
             joinedload(Campaign.campaign_offers).joinedload(CampaignOffer.offer),
             joinedload(Campaign.tracking_domain),
         )
-        .filter(Campaign.id == campaign_id)
+        .filter(Campaign.id == campaign_id, Campaign.user_id == current_user.id)
         .first()
     )
     if not campaign:
@@ -200,14 +231,14 @@ def campaign_detail(campaign_id: int, request: Request, db: Session = Depends(ge
 
 
 @router.get("/{campaign_id}/edit")
-def edit_campaign_form(campaign_id: int, request: Request, db: Session = Depends(get_db)):
+def edit_campaign_form(campaign_id: int, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     campaign = (
         db.query(Campaign)
         .options(
             joinedload(Campaign.campaign_landing_pages),
             joinedload(Campaign.campaign_offers),
         )
-        .filter(Campaign.id == campaign_id)
+        .filter(Campaign.id == campaign_id, Campaign.user_id == current_user.id)
         .first()
     )
     if not campaign:
@@ -217,10 +248,10 @@ def edit_campaign_form(campaign_id: int, request: Request, db: Session = Depends
         {
             "request": request,
             "campaign": campaign,
-            "traffic_sources": db.query(TrafficSource).order_by(TrafficSource.name).all(),
-            "landing_pages": db.query(LandingPage).order_by(LandingPage.name).all(),
-            "offers": db.query(Offer).order_by(Offer.name).all(),
-            "tracking_domains": db.query(TrackingDomain).order_by(TrackingDomain.domain).all(),
+            "traffic_sources": db.query(TrafficSource).filter(TrafficSource.user_id == current_user.id).order_by(TrafficSource.name).all(),
+            "landing_pages": db.query(LandingPage).filter(LandingPage.user_id == current_user.id).order_by(LandingPage.name).all(),
+            "offers": db.query(Offer).filter(Offer.user_id == current_user.id).order_by(Offer.name).all(),
+            "tracking_domains": db.query(TrackingDomain).filter(TrackingDomain.user_id == current_user.id).order_by(TrackingDomain.domain).all(),
             "existing_lp_weights": {clp.landing_page_id: clp.weight for clp in campaign.campaign_landing_pages},
             "existing_offer_weights": {co.offer_id: co.weight for co in campaign.campaign_offers},
         },
@@ -228,17 +259,29 @@ def edit_campaign_form(campaign_id: int, request: Request, db: Session = Depends
 
 
 @router.post("/{campaign_id}/edit")
-async def update_campaign(campaign_id: int, request: Request, db: Session = Depends(get_db)):
-    campaign = db.get(Campaign, campaign_id)
+async def update_campaign(campaign_id: int, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == current_user.id).first()
     if not campaign:
         raise HTTPException(status_code=404)
 
     form = await request.form()
-    cost_override = form.get("cost_override") or ""
+
+    traffic_source_id = int(form.get("traffic_source_id"))
+    if not db.query(TrafficSource).filter(
+        TrafficSource.id == traffic_source_id, TrafficSource.user_id == current_user.id
+    ).first():
+        raise HTTPException(status_code=400, detail="Unknown traffic source")
+
     tracking_domain_id = form.get("tracking_domain_id") or ""
+    if tracking_domain_id and not db.query(TrackingDomain).filter(
+        TrackingDomain.id == int(tracking_domain_id), TrackingDomain.user_id == current_user.id
+    ).first():
+        raise HTTPException(status_code=400, detail="Unknown tracking domain")
+
+    cost_override = form.get("cost_override") or ""
     bot_redirect_url = form.get("bot_redirect_url") or ""
     campaign.name = form.get("name", "").strip()
-    campaign.traffic_source_id = int(form.get("traffic_source_id"))
+    campaign.traffic_source_id = traffic_source_id
     campaign.tracking_domain_id = int(tracking_domain_id) if tracking_domain_id else None
     campaign.cost_override = float(cost_override) if cost_override else None
     campaign.bot_redirect_url = bot_redirect_url or None
@@ -248,8 +291,10 @@ async def update_campaign(campaign_id: int, request: Request, db: Session = Depe
     db.query(CampaignOffer).filter(CampaignOffer.campaign_id == campaign.id).delete()
     db.flush()
 
-    _apply_variants(db, campaign, form, "lp_weight_", CampaignLandingPage, "landing_page_id")
-    offer_count = _apply_variants(db, campaign, form, "offer_weight_", CampaignOffer, "offer_id")
+    owned_lp_ids = {lp.id for lp in db.query(LandingPage.id).filter(LandingPage.user_id == current_user.id)}
+    owned_offer_ids = {o.id for o in db.query(Offer.id).filter(Offer.user_id == current_user.id)}
+    _apply_variants(db, campaign, form, "lp_weight_", CampaignLandingPage, "landing_page_id", owned_lp_ids)
+    offer_count = _apply_variants(db, campaign, form, "offer_weight_", CampaignOffer, "offer_id", owned_offer_ids)
 
     if offer_count == 0:
         db.rollback()
@@ -260,13 +305,9 @@ async def update_campaign(campaign_id: int, request: Request, db: Session = Depe
 
 
 @router.get("/{campaign_id}/delete")
-def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
-    campaign = db.get(Campaign, campaign_id)
+def delete_campaign(campaign_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id, Campaign.user_id == current_user.id).first()
     if campaign:
-        db.query(Conversion).filter(
-            Conversion.click_id.in_(db.query(Click.id).filter(Click.campaign_id == campaign_id))
-        ).delete(synchronize_session=False)
-        db.query(Click).filter(Click.campaign_id == campaign_id).delete(synchronize_session=False)
-        db.delete(campaign)
+        delete_campaign_cascade(db, campaign)
         db.commit()
     return RedirectResponse(url="/campaigns?msg=Campaign deleted", status_code=303)

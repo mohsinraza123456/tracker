@@ -8,8 +8,9 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
+from app.auth import get_current_user
 from app.database import get_db
-from app.models import Campaign, Click
+from app.models import Campaign, Click, User
 from app.stats import COUNTABLE_CLICK_FILTER, aggregate_clicks
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -61,15 +62,21 @@ def _resolve_range(start: str | None, end: str | None) -> tuple[date, date, date
     return start_date, end_date, range_start, range_end
 
 
-def _build_report(db: Session, dimension: str, range_start: datetime, range_end: datetime):
+def _build_report(db: Session, user_id: int, dimension: str, range_start: datetime, range_end: datetime):
     clicks = (
         db.query(Click)
+        .join(Campaign, Click.campaign_id == Campaign.id)
         .options(
             joinedload(Click.campaign).joinedload(Campaign.traffic_source),
             joinedload(Click.landing_page),
             joinedload(Click.offer),
         )
-        .filter(Click.created_at >= range_start, Click.created_at <= range_end, *COUNTABLE_CLICK_FILTER)
+        .filter(
+            Campaign.user_id == user_id,
+            Click.created_at >= range_start,
+            Click.created_at <= range_end,
+            *COUNTABLE_CLICK_FILTER,
+        )
         .all()
     )
 
@@ -77,7 +84,9 @@ def _build_report(db: Session, dimension: str, range_start: datetime, range_end:
 
     excluded_count = (
         db.query(func.count(Click.id))
+        .join(Campaign, Click.campaign_id == Campaign.id)
         .filter(
+            Campaign.user_id == user_id,
             Click.created_at >= range_start,
             Click.created_at <= range_end,
             (Click.is_bot.is_(True)) | (Click.is_duplicate.is_(True)),
@@ -95,12 +104,13 @@ def reports(
     start: str | None = None,
     end: str | None = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     if dimension not in DIMENSIONS:
         dimension = "country"
 
     start_date, end_date, range_start, range_end = _resolve_range(start, end)
-    rows, totals, excluded_count = _build_report(db, dimension, range_start, range_end)
+    rows, totals, excluded_count = _build_report(db, current_user.id, dimension, range_start, range_end)
 
     return templates.TemplateResponse(
         "reports.html",
@@ -124,12 +134,13 @@ def export_report_csv(
     start: str | None = None,
     end: str | None = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     if dimension not in DIMENSIONS:
         dimension = "country"
 
     start_date, end_date, range_start, range_end = _resolve_range(start, end)
-    rows, totals, _ = _build_report(db, dimension, range_start, range_end)
+    rows, totals, _ = _build_report(db, current_user.id, dimension, range_start, range_end)
 
     buffer = io.StringIO()
     writer = csv.writer(buffer)

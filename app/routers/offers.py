@@ -3,37 +3,42 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from app.auth import get_current_user
 from app.database import get_db
-from app.models import Click, Offer
+from app.models import Click, Offer, User
 
 router = APIRouter(prefix="/offers", tags=["offers"])
 templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("")
-def list_offers(request: Request, db: Session = Depends(get_db)):
-    offers = db.query(Offer).order_by(Offer.name).all()
+def list_offers(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    offers = db.query(Offer).filter(Offer.user_id == current_user.id).order_by(Offer.name).all()
     return templates.TemplateResponse("offers/list.html", {"request": request, "offers": offers})
 
 
 @router.get("/new")
-def new_offer_form(request: Request):
+def new_offer_form(request: Request, current_user: User = Depends(get_current_user)):
     return templates.TemplateResponse("offers/form.html", {"request": request, "offer": None})
 
 
 @router.post("/new")
 def create_offer(
-    name: str = Form(...), url: str = Form(...), payout: float = Form(0.0), db: Session = Depends(get_db)
+    name: str = Form(...),
+    url: str = Form(...),
+    payout: float = Form(0.0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    offer = Offer(name=name, url=url, payout=payout)
+    offer = Offer(user_id=current_user.id, name=name, url=url, payout=payout)
     db.add(offer)
     db.commit()
     return RedirectResponse(url="/offers?msg=Offer created", status_code=303)
 
 
 @router.get("/{offer_id}/edit")
-def edit_offer_form(offer_id: int, request: Request, db: Session = Depends(get_db)):
-    offer = db.get(Offer, offer_id)
+def edit_offer_form(offer_id: int, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    offer = db.query(Offer).filter(Offer.id == offer_id, Offer.user_id == current_user.id).first()
     if not offer:
         raise HTTPException(status_code=404)
     return templates.TemplateResponse("offers/form.html", {"request": request, "offer": offer})
@@ -46,8 +51,9 @@ def update_offer(
     url: str = Form(...),
     payout: float = Form(0.0),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    offer = db.get(Offer, offer_id)
+    offer = db.query(Offer).filter(Offer.id == offer_id, Offer.user_id == current_user.id).first()
     if not offer:
         raise HTTPException(status_code=404)
     offer.name = name
@@ -58,8 +64,8 @@ def update_offer(
 
 
 @router.get("/{offer_id}/delete")
-def delete_offer(offer_id: int, db: Session = Depends(get_db)):
-    offer = db.get(Offer, offer_id)
+def delete_offer(offer_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    offer = db.query(Offer).filter(Offer.id == offer_id, Offer.user_id == current_user.id).first()
     if offer:
         in_use = offer.campaign_links or db.query(Click).filter(Click.offer_id == offer_id).first()
         if in_use:

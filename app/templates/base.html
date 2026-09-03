@@ -21,6 +21,9 @@
       <li><a href="/landing-pages">Landing Pages</a></li>
       <li><a href="/offers">Offers</a></li>
       <li><a href="/tracking-domains">Domains</a></li>
+      {% if request.session.get('is_admin') %}
+      <li><a href="/admin/users">Users</a></li>
+      {% endif %}
     </ul>
     <ul>
       <li>{{ request.session.get('user') }} &middot; <a href="/logout">Log out</a></li>

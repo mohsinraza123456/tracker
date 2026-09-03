@@ -1,10 +1,9 @@
 from alembic import command
 from alembic.config import Config
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.auth import require_login
 from app.config import SECRET_KEY
 from app.routers import (
     campaigns,
@@ -17,6 +16,7 @@ from app.routers import (
     traffic_sources,
     tracking,
     tracking_domains,
+    users_admin,
 )
 
 # Schema is owned by Alembic migrations (alembic/versions/) — bring the database up to
@@ -34,12 +34,14 @@ app.include_router(home.router)
 app.include_router(login.router)
 app.include_router(tracking.router)
 
-# Everything else requires a logged-in session.
-protected = [Depends(require_login)]
-app.include_router(dashboard.router, dependencies=protected)
-app.include_router(reports.router, dependencies=protected)
-app.include_router(campaigns.router, dependencies=protected)
-app.include_router(traffic_sources.router, dependencies=protected)
-app.include_router(landing_pages.router, dependencies=protected)
-app.include_router(offers.router, dependencies=protected)
-app.include_router(tracking_domains.router, dependencies=protected)
+# Everything else enforces login (and, for users_admin, admin rights) via a
+# Depends(get_current_user)/Depends(require_admin) parameter on each handler —
+# that's also how each handler gets the User row it needs to scope owned data.
+app.include_router(dashboard.router)
+app.include_router(reports.router)
+app.include_router(campaigns.router)
+app.include_router(traffic_sources.router)
+app.include_router(landing_pages.router)
+app.include_router(offers.router)
+app.include_router(tracking_domains.router)
+app.include_router(users_admin.router)

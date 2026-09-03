@@ -3,16 +3,22 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from app.auth import get_current_user
 from app.database import get_db
-from app.models import TrafficSource
+from app.models import TrafficSource, User
 
 router = APIRouter(prefix="/traffic-sources", tags=["traffic-sources"])
 templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("")
-def list_traffic_sources(request: Request, db: Session = Depends(get_db)):
-    traffic_sources = db.query(TrafficSource).order_by(TrafficSource.name).all()
+def list_traffic_sources(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    traffic_sources = (
+        db.query(TrafficSource)
+        .filter(TrafficSource.user_id == current_user.id)
+        .order_by(TrafficSource.name)
+        .all()
+    )
     return templates.TemplateResponse(
         "traffic_sources/list.html",
         {"request": request, "traffic_sources": traffic_sources},
@@ -20,7 +26,7 @@ def list_traffic_sources(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/new")
-def new_traffic_source_form(request: Request):
+def new_traffic_source_form(request: Request, current_user: User = Depends(get_current_user)):
     return templates.TemplateResponse(
         "traffic_sources/form.html", {"request": request, "ts": None}
     )
@@ -33,16 +39,19 @@ def create_traffic_source(
     default_cost: float = Form(0.0),
     notes: str = Form(""),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    ts = TrafficSource(name=name, cost_model=cost_model, default_cost=default_cost, notes=notes or None)
+    ts = TrafficSource(
+        user_id=current_user.id, name=name, cost_model=cost_model, default_cost=default_cost, notes=notes or None
+    )
     db.add(ts)
     db.commit()
     return RedirectResponse(url="/traffic-sources?msg=Traffic source created", status_code=303)
 
 
 @router.get("/{ts_id}/edit")
-def edit_traffic_source_form(ts_id: int, request: Request, db: Session = Depends(get_db)):
-    ts = db.get(TrafficSource, ts_id)
+def edit_traffic_source_form(ts_id: int, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    ts = db.query(TrafficSource).filter(TrafficSource.id == ts_id, TrafficSource.user_id == current_user.id).first()
     if not ts:
         raise HTTPException(status_code=404)
     return templates.TemplateResponse("traffic_sources/form.html", {"request": request, "ts": ts})
@@ -56,8 +65,9 @@ def update_traffic_source(
     default_cost: float = Form(0.0),
     notes: str = Form(""),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    ts = db.get(TrafficSource, ts_id)
+    ts = db.query(TrafficSource).filter(TrafficSource.id == ts_id, TrafficSource.user_id == current_user.id).first()
     if not ts:
         raise HTTPException(status_code=404)
     ts.name = name
@@ -69,8 +79,8 @@ def update_traffic_source(
 
 
 @router.get("/{ts_id}/delete")
-def delete_traffic_source(ts_id: int, db: Session = Depends(get_db)):
-    ts = db.get(TrafficSource, ts_id)
+def delete_traffic_source(ts_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    ts = db.query(TrafficSource).filter(TrafficSource.id == ts_id, TrafficSource.user_id == current_user.id).first()
     if ts:
         if ts.campaigns:
             return RedirectResponse(

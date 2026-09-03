@@ -25,13 +25,21 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(200), nullable=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+    traffic_sources: Mapped[list["TrafficSource"]] = relationship(back_populates="user")
+    landing_pages: Mapped[list["LandingPage"]] = relationship(back_populates="user")
+    offers: Mapped[list["Offer"]] = relationship(back_populates="user")
+    tracking_domains: Mapped[list["TrackingDomain"]] = relationship(back_populates="user")
+    campaigns: Mapped[list["Campaign"]] = relationship(back_populates="user")
 
 
 class TrafficSource(Base):
     __tablename__ = "traffic_sources"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     cost_model: Mapped[str] = mapped_column(String(20), nullable=False, default="manual")
     # cost charged per click when cost_model == "cpc"
@@ -39,6 +47,7 @@ class TrafficSource(Base):
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
+    user: Mapped["User"] = relationship(back_populates="traffic_sources")
     campaigns: Mapped[list["Campaign"]] = relationship(back_populates="traffic_source")
 
 
@@ -46,10 +55,12 @@ class LandingPage(Base):
     __tablename__ = "landing_pages"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     url: Mapped[str] = mapped_column(String(1000), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
+    user: Mapped["User"] = relationship(back_populates="landing_pages")
     campaign_links: Mapped[list["CampaignLandingPage"]] = relationship(back_populates="landing_page")
 
 
@@ -57,11 +68,13 @@ class Offer(Base):
     __tablename__ = "offers"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     url: Mapped[str] = mapped_column(String(1000), nullable=False)
     payout: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
+    user: Mapped["User"] = relationship(back_populates="offers")
     campaign_links: Mapped[list["CampaignOffer"]] = relationship(back_populates="offer")
 
 
@@ -72,11 +85,13 @@ class TrackingDomain(Base):
     __tablename__ = "tracking_domains"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     # full origin, e.g. "https://track.example.com" — no path or trailing slash
     domain: Mapped[str] = mapped_column(String(255), nullable=False)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
+    user: Mapped["User"] = relationship(back_populates="tracking_domains")
     campaigns: Mapped[list["Campaign"]] = relationship(back_populates="tracking_domain")
 
 
@@ -84,6 +99,7 @@ class Campaign(Base):
     __tablename__ = "campaigns"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -100,6 +116,7 @@ class Campaign(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
+    user: Mapped["User"] = relationship(back_populates="campaigns")
     traffic_source: Mapped["TrafficSource"] = relationship(back_populates="campaigns")
     tracking_domain: Mapped["TrackingDomain | None"] = relationship(back_populates="campaigns")
     clicks: Mapped[list["Click"]] = relationship(back_populates="campaign")
