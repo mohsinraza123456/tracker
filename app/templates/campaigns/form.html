@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit" if campaign else "New" }} Campaign{% endblock %}
+{% block content %}
+<h2>{{ "Edit" if campaign else "New" }} Campaign</h2>
+<form method="post" action="{{ '/campaigns/%d/edit' % campaign.id if campaign else '/campaigns/new' }}">
+  <label>Name
+    <input type="text" name="name" required value="{{ campaign.name if campaign else '' }}">
+  </label>
+
+  <label>Traffic Source
+    <select name="traffic_source_id" required>
+      <option value="">Select...</option>
+      {% for ts in traffic_sources %}
+      <option value="{{ ts.id }}" {{ "selected" if campaign and campaign.traffic_source_id == ts.id }}>{{ ts.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label>Cost per click override (optional, $)
+    <input type="number" step="0.0001" min="0" name="cost_override" value="{{ campaign.cost_override if campaign and campaign.cost_override is not none else '' }}">
+  </label>
+
+  <label>
+    <input type="checkbox" name="is_active" {{ "checked" if not campaign or campaign.is_active }}>
+    Active
+  </label>
+
+  <h3>Landing pages</h3>
+  <p><small>Optional pre-landers. Leave every weight at 0 to skip landing pages and go straight to the offer. Give two or more a weight to split test them &mdash; equal weights split traffic evenly, uneven weights (e.g. 70 / 30) send more to one variant.</small></p>
+  {% if landing_pages %}
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Landing Page</th><th>Weight</th></tr></thead>
+    <tbody>
+      {% for lp in landing_pages %}
+      <tr>
+        <td>{{ lp.name }}</td>
+        <td><input type="number" min="0" step="1" style="width:90px" name="lp_weight_{{ lp.id }}" value="{{ existing_lp_weights.get(lp.id, 0) }}"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p><em>No landing pages yet. <a href="/landing-pages/new">Create one</a> if you want a pre-lander.</em></p>
+  {% endif %}
+
+  <h3>Offers</h3>
+  <p><small>At least one offer needs a weight greater than 0. Give two or more a weight to split test them.</small></p>
+  {% if offers %}
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Offer</th><th>Payout</th><th>Weight</th></tr></thead>
+    <tbody>
+      {% for o in offers %}
+      <tr>
+        <td>{{ o.name }}</td>
+        <td>${{ "%.2f"|format(o.payout) }}</td>
+        <td><input type="number" min="0" step="1" style="width:90px" name="offer_weight_{{ o.id }}" value="{{ existing_offer_weights.get(o.id, 0) }}"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p><em>No offers yet. <a href="/offers/new">Create one first</a>.</em></p>
+  {% endif %}
+
+  <br>
+  <button type="submit">Save</button>
+  <a href="/campaigns" role="button" class="secondary">Cancel</a>
+</form>
+{% endblock %}

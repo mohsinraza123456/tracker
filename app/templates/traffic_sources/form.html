@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit" if ts else "New" }} Traffic Source{% endblock %}
+{% block content %}
+<h2>{{ "Edit" if ts else "New" }} Traffic Source</h2>
+<form method="post" action="{{ '/traffic-sources/%d/edit' % ts.id if ts else '/traffic-sources/new' }}">
+  <label>Name
+    <input type="text" name="name" required value="{{ ts.name if ts else '' }}">
+  </label>
+  <label>Cost model
+    <select name="cost_model">
+      <option value="manual" {{ "selected" if ts and ts.cost_model == "manual" }}>Manual (enter cost per campaign)</option>
+      <option value="cpc" {{ "selected" if ts and ts.cost_model == "cpc" }}>Cost per click (auto)</option>
+    </select>
+  </label>
+  <label>Default cost per click
+    <input type="number" step="0.0001" min="0" name="default_cost" value="{{ ts.default_cost if ts else 0 }}">
+  </label>
+  <label>Notes
+    <textarea name="notes">{{ ts.notes if ts else '' }}</textarea>
+  </label>
+  <button type="submit">Save</button>
+  <a href="/traffic-sources" role="button" class="secondary">Cancel</a>
+</form>
+{% endblock %}

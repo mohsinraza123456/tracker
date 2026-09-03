@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<hgroup>
+  <h2>Dashboard</h2>
+  <p>Performance across all campaigns.</p>
+</hgroup>
+
+<form method="get" action="/">
+  <div class="grid">
+    <label>From <input type="date" name="start" value="{{ start }}"></label>
+    <label>To <input type="date" name="end" value="{{ end }}"></label>
+    <label>&nbsp;<button type="submit">Filter</button></label>
+  </div>
+</form>
+
+<div class="table-scroll">
+<table class="stats">
+  <thead>
+    <tr>
+      <th>Campaign</th><th>Traffic Source</th><th>Clicks</th><th>Conversions</th>
+      <th>Conv. Rate</th><th>Cost</th><th>Revenue</th><th>Profit</th><th>ROI</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td><a href="/campaigns/{{ row.campaign.id }}">{{ row.campaign.name }}</a></td>
+      <td>{{ row.campaign.traffic_source.name }}</td>
+      <td>{{ row.clicks }}</td>
+      <td>{{ row.conversions }}</td>
+      <td>{{ "%.2f"|format(row.cvr) }}%</td>
+      <td>${{ "%.2f"|format(row.cost) }}</td>
+      <td>${{ "%.2f"|format(row.revenue) }}</td>
+      <td class="{{ 'stat-good' if row.profit >= 0 else 'stat-bad' }}">${{ "%.2f"|format(row.profit) }}</td>
+      <td class="{{ 'stat-good' if row.roi >= 0 else 'stat-bad' }}">{{ "%.1f"|format(row.roi) }}%</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9"><em>No campaigns yet. <a href="/campaigns/new">Create your first campaign</a>.</em></td></tr>
+    {% endfor %}
+  </tbody>
+  {% if rows %}
+  <tfoot>
+    <tr>
+      <th>Total</th><th></th>
+      <th>{{ totals.clicks }}</th><th>{{ totals.conversions }}</th>
+      <th>{{ "%.2f"|format(totals.cvr) }}%</th>
+      <th>${{ "%.2f"|format(totals.cost) }}</th>
+      <th>${{ "%.2f"|format(totals.revenue) }}</th>
+      <th class="{{ 'stat-good' if totals.profit >= 0 else 'stat-bad' }}">${{ "%.2f"|format(totals.profit) }}</th>
+      <th class="{{ 'stat-good' if totals.roi >= 0 else 'stat-bad' }}">{{ "%.1f"|format(totals.roi) }}%</th>
+    </tr>
+  </tfoot>
+  {% endif %}
+</table>
+</div>
+{% endblock %}

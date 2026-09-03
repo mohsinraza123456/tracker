@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Campaigns{% endblock %}
+{% block content %}
+<hgroup>
+  <h2>Campaigns</h2>
+  <p>Each campaign is a tracking link: traffic source &rarr; (landing page) &rarr; offer.</p>
+</hgroup>
+<a href="/campaigns/new" role="button">+ New Campaign</a>
+
+<table>
+  <thead><tr><th>Name</th><th>Traffic Source</th><th>Landing Pages</th><th>Offers</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for c in campaigns %}
+    <tr>
+      <td><a href="/campaigns/{{ c.id }}">{{ c.name }}</a></td>
+      <td>{{ c.traffic_source.name }}</td>
+      <td>
+        {% if not c.campaign_landing_pages %}—
+        {% elif c.campaign_landing_pages|length == 1 %}{{ c.campaign_landing_pages[0].landing_page.name }}
+        {% else %}{{ c.campaign_landing_pages|length }} (split test)
+        {% endif %}
+      </td>
+      <td>
+        {% if c.campaign_offers|length == 1 %}{{ c.campaign_offers[0].offer.name }}
+        {% else %}{{ c.campaign_offers|length }} (split test)
+        {% endif %}
+      </td>
+      <td>
+        {% if c.is_active %}<span class="badge badge-active">active</span>
+        {% else %}<span class="badge badge-inactive">paused</span>{% endif %}
+      </td>
+      <td class="actions">
+        <a href="/campaigns/{{ c.id }}">Stats</a>
+        <a href="/campaigns/{{ c.id }}/edit">Edit</a>
+        <a href="/campaigns/{{ c.id }}/delete" onclick="return confirm('Delete this campaign and all its click/conversion history?')">Delete</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6"><em>No campaigns yet.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

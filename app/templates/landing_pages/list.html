@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Landing Pages{% endblock %}
+{% block content %}
+<hgroup>
+  <h2>Landing Pages</h2>
+  <p>Optional pre-landers placed between the click and the offer.</p>
+</hgroup>
+<a href="/landing-pages/new" role="button">+ New Landing Page</a>
+
+<table>
+  <thead><tr><th>Name</th><th>URL</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for lp in landing_pages %}
+    <tr>
+      <td>{{ lp.name }}</td>
+      <td><a href="{{ lp.url }}" target="_blank">{{ lp.url }}</a></td>
+      <td class="actions">
+        <a href="/landing-pages/{{ lp.id }}/edit">Edit</a>
+        <a href="/landing-pages/{{ lp.id }}/delete" onclick="return confirm('Delete this landing page?')">Delete</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3"><em>No landing pages yet.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

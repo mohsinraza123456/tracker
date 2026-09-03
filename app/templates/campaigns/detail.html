@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name }}{% endblock %}
+{% block content %}
+<hgroup>
+  <h2>{{ campaign.name }}</h2>
+  <p>
+    {{ campaign.traffic_source.name }} &rarr;
+    {% if campaign.campaign_landing_pages %}
+      {{ campaign.campaign_landing_pages|length }} landing page{{ "s" if campaign.campaign_landing_pages|length != 1 else "" }} &rarr;
+    {% endif %}
+    {{ campaign.campaign_offers|length }} offer{{ "s" if campaign.campaign_offers|length != 1 else "" }}
+  </p>
+</hgroup>
+
+<p>Tracking link (put this at your traffic source):</p>
+<span class="track-link">{{ base_url }}/click/{{ campaign.id }}</span>
+
+<h3>Summary</h3>
+<div class="table-scroll">
+<table class="stats">
+  <thead><tr><th>Clicks</th><th>Conversions</th><th>Conv. Rate</th><th>Cost</th><th>Revenue</th><th>Profit</th><th>ROI</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>{{ stats.clicks }}</td>
+      <td>{{ stats.conversions }}</td>
+      <td>{{ "%.2f"|format(stats.cvr) }}%</td>
+      <td>${{ "%.2f"|format(stats.cost) }}</td>
+      <td>${{ "%.2f"|format(stats.revenue) }}</td>
+      <td class="{{ 'stat-good' if stats.profit >= 0 else 'stat-bad' }}">${{ "%.2f"|format(stats.profit) }}</td>
+      <td class="{{ 'stat-good' if stats.roi >= 0 else 'stat-bad' }}">{{ "%.1f"|format(stats.roi) }}%</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+{% if excluded_count %}
+<p><small>{{ excluded_count }} bot/duplicate click{{ "s" if excluded_count != 1 else "" }} excluded from these numbers (flagged in the click log below).</small></p>
+{% endif %}
+
+<h3>Offers{{ " (split test)" if campaign.campaign_offers|length > 1 else "" }}</h3>
+<div class="table-scroll">
+<table class="stats">
+  <thead><tr><th>Offer</th><th>Clicks</th><th>Conversions</th><th>Conv. Rate</th><th>Cost</th><th>Revenue</th><th>Profit</th><th>ROI</th></tr></thead>
+  <tbody>
+    {% for row in offer_rows %}
+    <tr>
+      <td>{{ row.key }}</td>
+      <td>{{ row.clicks }}</td>
+      <td>{{ row.conversions }}</td>
+      <td>{{ "%.2f"|format(row.cvr) }}%</td>
+      <td>${{ "%.2f"|format(row.cost) }}</td>
+      <td>${{ "%.2f"|format(row.revenue) }}</td>
+      <td class="{{ 'stat-good' if row.profit >= 0 else 'stat-bad' }}">${{ "%.2f"|format(row.profit) }}</td>
+      <td class="{{ 'stat-good' if row.roi >= 0 else 'stat-bad' }}">{{ "%.1f"|format(row.roi) }}%</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8"><em>No clicks yet.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if lp_rows is not none %}
+<h3>Landing Pages{{ " (split test)" if campaign.campaign_landing_pages|length > 1 else "" }}</h3>
+<div class="table-scroll">
+<table class="stats">
+  <thead><tr><th>Landing Page</th><th>Clicks</th><th>Conversions</th><th>Conv. Rate</th><th>Cost</th><th>Revenue</th><th>Profit</th><th>ROI</th></tr></thead>
+  <tbody>
+    {% for row in lp_rows %}
+    <tr>
+      <td>{{ row.key }}</td>
+      <td>{{ row.clicks }}</td>
+      <td>{{ row.conversions }}</td>
+      <td>{{ "%.2f"|format(row.cvr) }}%</td>
+      <td>${{ "%.2f"|format(row.cost) }}</td>
+      <td>${{ "%.2f"|format(row.revenue) }}</td>
+      <td class="{{ 'stat-good' if row.profit >= 0 else 'stat-bad' }}">${{ "%.2f"|format(row.profit) }}</td>
+      <td class="{{ 'stat-good' if row.roi >= 0 else 'stat-bad' }}">{{ "%.1f"|format(row.roi) }}%</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8"><em>No clicks yet.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+<h3>Recent Clicks</h3>
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Time</th><th>Click ID</th><th>IP</th><th>Country</th><th>Device</th><th>Sub1</th><th>Flag</th><th>Converted</th></tr></thead>
+  <tbody>
+    {% for click in recent_clicks %}
+    <tr>
+      <td>{{ click.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td><code>{{ click.id }}</code></td>
+      <td>{{ click.ip_address or "" }}</td>
+      <td>{{ click.country or "" }}</td>
+      <td>{{ click.device_type or "" }}</td>
+      <td>{{ click.sub1 or "" }}</td>
+      <td>
+        {% if click.is_bot %}<span class="badge badge-inactive">Bot</span>{% endif %}
+        {% if click.is_duplicate %}<span class="badge badge-inactive">Dup</span>{% endif %}
+      </td>
+      <td>{{ "✅" if click.conversions else "" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8"><em>No clicks yet.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h3>Recent Conversions</h3>
+<table>
+  <thead><tr><th>Time</th><th>Click ID</th><th>Payout</th><th>External ID</th></tr></thead>
+  <tbody>
+    {% for conv in recent_conversions %}
+    <tr>
+      <td>{{ conv.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td><code>{{ conv.click_id }}</code></td>
+      <td>${{ "%.2f"|format(conv.payout) }}</td>
+      <td>{{ conv.external_id or "" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4"><em>No conversions yet.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

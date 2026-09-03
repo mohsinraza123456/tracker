@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Offers{% endblock %}
+{% block content %}
+<hgroup>
+  <h2>Offers</h2>
+  <p>Final destinations that pay you when a visitor converts.</p>
+</hgroup>
+<a href="/offers/new" role="button">+ New Offer</a>
+
+<table>
+  <thead><tr><th>Name</th><th>URL</th><th>Default payout</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for o in offers %}
+    <tr>
+      <td>{{ o.name }}</td>
+      <td><a href="{{ o.url }}" target="_blank">{{ o.url }}</a></td>
+      <td>${{ "%.2f"|format(o.payout) }}</td>
+      <td class="actions">
+        <a href="/offers/{{ o.id }}/edit">Edit</a>
+        <a href="/offers/{{ o.id }}/delete" onclick="return confirm('Delete this offer?')">Delete</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4"><em>No offers yet.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

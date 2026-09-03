@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<hgroup>
+  <h2>Reports</h2>
+  <p>Break down performance by any dimension — GEO, device, traffic source, campaign, sub-id.</p>
+</hgroup>
+
+<form method="get" action="/reports">
+  <div class="grid">
+    <label>Breakdown by
+      <select name="dimension">
+        {% for key, label in dimensions.items() %}
+        <option value="{{ key }}" {{ "selected" if key == dimension }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>From <input type="date" name="start" value="{{ start }}"></label>
+    <label>To <input type="date" name="end" value="{{ end }}"></label>
+    <label>&nbsp;<button type="submit">Run report</button></label>
+  </div>
+</form>
+
+<div class="table-scroll">
+<table class="stats">
+  <thead>
+    <tr>
+      <th>{{ dimension_label }}</th><th>Clicks</th><th>Conversions</th>
+      <th>Conv. Rate</th><th>Cost</th><th>Revenue</th><th>Profit</th><th>ROI</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.key }}</td>
+      <td>{{ row.clicks }}</td>
+      <td>{{ row.conversions }}</td>
+      <td>{{ "%.2f"|format(row.cvr) }}%</td>
+      <td>${{ "%.2f"|format(row.cost) }}</td>
+      <td>${{ "%.2f"|format(row.revenue) }}</td>
+      <td class="{{ 'stat-good' if row.profit >= 0 else 'stat-bad' }}">${{ "%.2f"|format(row.profit) }}</td>
+      <td class="{{ 'stat-good' if row.roi >= 0 else 'stat-bad' }}">{{ "%.1f"|format(row.roi) }}%</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8"><em>No clicks in this date range yet.</em></td></tr>
+    {% endfor %}
+  </tbody>
+  {% if rows %}
+  <tfoot>
+    <tr>
+      <th>Total</th>
+      <th>{{ totals.clicks }}</th><th>{{ totals.conversions }}</th>
+      <th>{{ "%.2f"|format(totals.cvr) }}%</th>
+      <th>${{ "%.2f"|format(totals.cost) }}</th>
+      <th>${{ "%.2f"|format(totals.revenue) }}</th>
+      <th class="{{ 'stat-good' if totals.profit >= 0 else 'stat-bad' }}">${{ "%.2f"|format(totals.profit) }}</th>
+      <th class="{{ 'stat-good' if totals.roi >= 0 else 'stat-bad' }}">{{ "%.1f"|format(totals.roi) }}%</th>
+    </tr>
+  </tfoot>
+  {% endif %}
+</table>
+</div>
+{% if excluded_count %}
+<p><small>{{ excluded_count }} bot/duplicate click{{ "s" if excluded_count != 1 else "" }} excluded from these numbers in this date range.</small></p>
+{% endif %}
+{% endblock %}

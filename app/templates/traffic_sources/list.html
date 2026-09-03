@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Traffic Sources{% endblock %}
+{% block content %}
+<hgroup>
+  <h2>Traffic Sources</h2>
+  <p>Where your visitors come from.</p>
+</hgroup>
+<a href="/traffic-sources/new" role="button">+ New Traffic Source</a>
+
+<table>
+  <thead>
+    <tr><th>Name</th><th>Cost model</th><th>Default cost</th><th>Notes</th><th>Actions</th></tr>
+  </thead>
+  <tbody>
+    {% for ts in traffic_sources %}
+    <tr>
+      <td>{{ ts.name }}</td>
+      <td>{{ ts.cost_model }}</td>
+      <td>${{ "%.4f"|format(ts.default_cost) }}</td>
+      <td>{{ ts.notes or "" }}</td>
+      <td class="actions">
+        <a href="/traffic-sources/{{ ts.id }}/edit">Edit</a>
+        <a href="/traffic-sources/{{ ts.id }}/delete" onclick="return confirm('Delete this traffic source?')">Delete</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5"><em>No traffic sources yet.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit" if lp else "New" }} Landing Page{% endblock %}
+{% block content %}
+<h2>{{ "Edit" if lp else "New" }} Landing Page</h2>
+<form method="post" action="{{ '/landing-pages/%d/edit' % lp.id if lp else '/landing-pages/new' }}">
+  <label>Name
+    <input type="text" name="name" required value="{{ lp.name if lp else '' }}">
+  </label>
+  <label>URL
+    <input type="url" name="url" required value="{{ lp.url if lp else '' }}" placeholder="https://example.com/lander">
+  </label>
+  <small>On this page, link visitors onward using <code>{base_url}/go/{clickid}</code> so the tracker can hand them off to the offer.</small>
+  <br><br>
+  <button type="submit">Save</button>
+  <a href="/landing-pages" role="button" class="secondary">Cancel</a>
+</form>
+{% endblock %}
