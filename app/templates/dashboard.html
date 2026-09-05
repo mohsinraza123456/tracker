@@ -16,20 +16,32 @@
 
 <div class="stat-grid">
   <div class="stat-tile">
-    <div class="stat-label">Clicks</div>
-    <div class="stat-value">{{ totals.clicks }}</div>
+    <div class="stat-icon icon-clicks">🖱️</div>
+    <div>
+      <div class="stat-label">Clicks</div>
+      <div class="stat-value">{{ totals.clicks }}</div>
+    </div>
   </div>
   <div class="stat-tile">
-    <div class="stat-label">Conversions</div>
-    <div class="stat-value">{{ totals.conversions }}</div>
+    <div class="stat-icon icon-conversions">🎯</div>
+    <div>
+      <div class="stat-label">Conversions</div>
+      <div class="stat-value">{{ totals.conversions }}</div>
+    </div>
   </div>
   <div class="stat-tile">
-    <div class="stat-label">Revenue</div>
-    <div class="stat-value">${{ "%.2f"|format(totals.revenue) }}</div>
+    <div class="stat-icon icon-revenue">💰</div>
+    <div>
+      <div class="stat-label">Revenue</div>
+      <div class="stat-value">${{ "%.2f"|format(totals.revenue) }}</div>
+    </div>
   </div>
   <div class="stat-tile">
-    <div class="stat-label">Profit</div>
-    <div class="stat-value {{ 'stat-good' if totals.profit >= 0 else 'stat-bad' }}">${{ "%.2f"|format(totals.profit) }}</div>
+    <div class="stat-icon icon-profit">📈</div>
+    <div>
+      <div class="stat-label">Profit</div>
+      <div class="stat-value {{ 'stat-good' if totals.profit >= 0 else 'stat-bad' }}">${{ "%.2f"|format(totals.profit) }}</div>
+    </div>
   </div>
 </div>
 

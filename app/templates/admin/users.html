@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Manage Users{% endblock %}
 {% block content %}
-<hgroup>
-  <h2>Manage Users</h2>
-  <p>Each account has its own isolated campaigns, traffic sources, offers, landing pages, and tracking domains &mdash; no account can see or reference another's.</p>
-</hgroup>
-
-<a href="/admin/users/new" role="button">+ Add User</a>
-<br><br>
+<div class="page-header">
+  <hgroup>
+    <h2>Manage Users</h2>
+    <p>Each account has its own isolated campaigns, traffic sources, offers, landing pages, and tracking domains &mdash; no account can see or reference another's.</p>
+  </hgroup>
+  <a href="/admin/users/new" role="button">+ Add User</a>
+</div>
+<br>
 
 <div class="table-scroll">
 <table>

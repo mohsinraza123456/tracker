@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Traffic Sources{% endblock %}
 {% block content %}
-<hgroup>
-  <h2>Traffic Sources</h2>
-  <p>Where your visitors come from.</p>
-</hgroup>
-<a href="/traffic-sources/new" role="button">+ New Traffic Source</a>
+<div class="page-header">
+  <hgroup>
+    <h2>Traffic Sources</h2>
+    <p>Where your visitors come from.</p>
+  </hgroup>
+  <a href="/traffic-sources/new" role="button">+ New Traffic Source</a>
+</div>
+<br>
 
+<div class="table-scroll">
 <table>
   <thead>
     <tr><th>Name</th><th>Cost model</th><th>Default cost</th><th>Notes</th><th>Actions</th></tr>
@@ -28,4 +32,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

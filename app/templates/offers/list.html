@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Offers{% endblock %}
 {% block content %}
-<hgroup>
-  <h2>Offers</h2>
-  <p>Final destinations that pay you when a visitor converts.</p>
-</hgroup>
-<a href="/offers/new" role="button">+ New Offer</a>
+<div class="page-header">
+  <hgroup>
+    <h2>Offers</h2>
+    <p>Final destinations that pay you when a visitor converts.</p>
+  </hgroup>
+  <a href="/offers/new" role="button">+ New Offer</a>
+</div>
+<br>
 
+<div class="table-scroll">
 <table>
   <thead><tr><th>Name</th><th>URL</th><th>Default payout</th><th>Actions</th></tr></thead>
   <tbody>
@@ -25,4 +29,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

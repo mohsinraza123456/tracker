@@ -1,15 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Tracking Domains{% endblock %}
 {% block content %}
-<hgroup>
-  <h2>Tracking Domains</h2>
-  <p>Extra domains a campaign's tracking link can use, besides the default.</p>
-</hgroup>
-<p><small>Adding a domain here only changes what link a campaign <em>displays</em>.
-You still have to point that domain at this server yourself (DNS + reverse proxy) —
-the app answers the same regardless of which hostname a request arrives on.</small></p>
-<a href="/tracking-domains/new" role="button">+ New Tracking Domain</a>
+<div class="page-header">
+  <hgroup>
+    <h2>Tracking Domains</h2>
+    <p>Extra domains a campaign's tracking link can use, besides the default.</p>
+  </hgroup>
+  <a href="/tracking-domains/new" role="button">+ New Tracking Domain</a>
+</div>
+<div class="hint-box">
+  Adding a domain here only changes what link a campaign <em>displays</em>.
+  You still have to point that domain at this server yourself (DNS + reverse proxy) —
+  the app answers the same regardless of which hostname a request arrives on.
+</div>
 
+<div class="table-scroll">
 <table>
   <thead><tr><th>Domain</th><th>Notes</th><th>Actions</th></tr></thead>
   <tbody>
@@ -27,4 +32,5 @@ the app answers the same regardless of which hostname a request arrives on.</sma
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

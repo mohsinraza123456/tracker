@@ -1,20 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 /* ---------- Design tokens ---------- */
 :root {
   --accent: #4f46e5;
   --accent-hover: #4338ca;
   --accent-light: #eef2ff;
+  --accent-2: #06b6d4;
   --surface: #ffffff;
   --page-bg: #f8fafc;
   --border: #e2e8f0;
   --text-primary: #0f172a;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  --radius: 10px;
+  --radius: 12px;
   --radius-sm: 8px;
+  --radius-lg: 16px;
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow: 0 4px 12px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.12), 0 4px 8px rgba(15, 23, 42, 0.04);
   --good: #16a34a;
+  --good-light: #dcfce7;
   --bad: #dc2626;
+  --bad-light: #fee2e2;
 }
 
 /* Re-theme Pico so every default-styled element (buttons, inputs, cards,
@@ -23,7 +30,7 @@
    a plain `:root` rule regardless of source order — !important is the
    reliable way to win against a selector we can't out-specify cleanly. */
 :root {
-  --pico-font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
+  --pico-font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
   --pico-font-size: 100% !important;
   --pico-line-height: 1.5 !important;
   --pico-primary: var(--accent) !important;
@@ -60,6 +67,32 @@
 body { background: var(--page-bg); overflow-x: hidden; }
 a { text-decoration: none; }
 a:hover { text-decoration: underline; }
+h1, h2, h3, h4, h5 { letter-spacing: -0.01em; font-weight: 700; }
+
+/* ---------- Buttons & inputs ---------- */
+button, [role="button"], input[type="submit"] {
+  font-weight: 600 !important;
+  letter-spacing: -0.005em;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+button:not(.secondary):not(.outline):hover,
+[role="button"]:not(.secondary):not(.outline):hover {
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.28);
+  transform: translateY(-1px);
+}
+button:active, [role="button"]:active { transform: translateY(0); }
+
+input:not([type="checkbox"]):not([type="radio"]),
+select, textarea {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
+input:focus-visible, select:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 /* ---------- App shell (sidebar layout, logged-in pages) ---------- */
 .app-shell {
@@ -85,13 +118,35 @@ a:hover { text-decoration: underline; }
 .sidebar-brand a {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.65rem;
   color: var(--text-primary);
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   line-height: 1.25;
 }
 .sidebar-brand a:hover { text-decoration: none; }
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.05rem;
+  box-shadow: 0 3px 8px rgba(79, 70, 229, 0.35);
+}
+.sidebar-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 0.9rem 0.75rem 0.3rem;
+}
 
 .sidebar-nav {
   flex: 1;
@@ -110,9 +165,10 @@ a:hover { text-decoration: underline; }
   color: var(--text-secondary);
   font-size: 0.875rem;
   font-weight: 500;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 .sidebar-nav a:hover { background: #f1f5f9; color: var(--text-primary); text-decoration: none; }
-.sidebar-nav a.active { background: var(--accent-light); color: var(--accent); }
+.sidebar-nav a.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
 
 .sidebar-footer {
   padding: 0.9rem 1rem;
@@ -190,6 +246,48 @@ a:hover { text-decoration: underline; }
 hgroup h2 { margin-bottom: 0.2rem; font-size: 1.5rem; }
 hgroup p { color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.page-header hgroup { margin-bottom: 0; }
+.page-header hgroup p { margin-bottom: 0; }
+.page-header > [role="button"] { flex-shrink: 0; white-space: nowrap; }
+
+.hint-box {
+  background: var(--accent-light);
+  border-left: 3px solid var(--accent);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  padding: 0.7rem 1rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 1rem 0 1.5rem;
+}
+.hint-box em { color: var(--text-primary); font-style: normal; font-weight: 600; }
+
+/* Forms rendered directly in the page become a card panel */
+.app-main > form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem 1.75rem 1.75rem;
+  max-width: 720px;
+}
+.app-main > form h3 {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: 1.05rem;
+}
+.app-main > form .table-scroll {
+  box-shadow: none;
+}
+.app-main > form:has(input[name="username"]) { max-width: 480px; }
+
 /* ---------- Components ---------- */
 .flash {
   background: #ecfdf5;
@@ -214,18 +312,37 @@ hgroup p { color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9re
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.1rem 1.25rem;
+  padding: 1.15rem 1.25rem;
   box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
 }
+.stat-tile:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+.stat-icon.icon-clicks { background: #e0f2fe; }
+.stat-icon.icon-conversions { background: #ede9fe; }
+.stat-icon.icon-revenue { background: var(--good-light); }
+.stat-icon.icon-profit { background: var(--accent-light); }
 .stat-label {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
   font-weight: 600;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
 }
-.stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+.stat-value { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
 @media (max-width: 900px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -246,18 +363,43 @@ table.stats td:first-child, table.stats th:first-child { text-align: left; }
 
 table tbody tr:hover { background: #f8fafc; }
 
-.table-scroll { overflow-x: auto; }
-.table-scroll table { min-width: 640px; }
+/* Every top-level table becomes a card, wrapped in .table-scroll (added
+   generically since Pico applies no card chrome to a bare <table>). */
+.app-main table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.table-scroll {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.25rem;
+}
+.table-scroll table { min-width: 640px; margin-bottom: 0; }
+.table-scroll table thead th:first-child { border-top-left-radius: var(--radius); }
+.table-scroll table thead th:last-child { border-top-right-radius: var(--radius); }
+.app-main table thead th {
+  background: #f8fafc;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+.table-scroll table tbody tr:last-child td { border-bottom: none; }
 
 .actions a { margin-right: 0.9rem; font-weight: 500; }
 .actions a:last-of-type { color: var(--bad); }
 
 .badge {
   display: inline-block;
-  padding: 0.15rem 0.6rem;
+  padding: 0.2rem 0.65rem;
   border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 .badge-active { background: #dcfce7; color: #166534; }
 .badge-inactive { background: #fee2e2; color: #991b1b; }
@@ -267,16 +409,92 @@ table tbody tr:hover { background: #f8fafc; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  padding: 0.9rem 1.1rem 0.6rem;
+  padding: 1rem 1.1rem 0.6rem;
 }
 .chart-card h4 {
   margin: 0 0 0.25rem;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .feature-card { transition: box-shadow 0.15s ease, transform 0.15s ease; }
-.feature-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.feature-card:hover { box-shadow: var(--shadow); transform: translateY(-3px); }
+.feature-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  background: var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ---------- Empty states ---------- */
+td em, .empty-state {
+  color: var(--text-muted);
+  font-style: normal;
+}
+tr:has(td[colspan]) td {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+/* ---------- Auth pages (login / register) ---------- */
+.auth-shell {
+  min-height: calc(100vh - 130px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+}
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 2.25rem 2rem;
+}
+.auth-card .brand-mark { margin: 0 auto 1.1rem; width: 46px; height: 46px; font-size: 1.35rem; border-radius: 12px; }
+.auth-card h2 { text-align: center; margin-bottom: 0.3rem; font-size: 1.4rem; }
+.auth-card > p.auth-sub { text-align: center; color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 1.5rem; }
+.auth-card button { width: 100%; margin-top: 0.5rem; }
+.auth-card .stat-bad {
+  background: var(--bad-light);
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+.auth-card .auth-footer { text-align: center; margin: 1.25rem 0 0; }
+
+/* ---------- Public landing hero ---------- */
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  margin-bottom: 1.25rem;
+}
+.hero-title {
+  font-size: clamp(2.1rem, 4vw, 3rem);
+  line-height: 1.1;
+  margin-bottom: 1rem;
+}
+.hero-title .accent-text {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

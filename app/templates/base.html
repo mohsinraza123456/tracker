@@ -11,17 +11,20 @@
 {% if request.session.get('user') %}
 <aside class="sidebar">
   <div class="sidebar-brand">
-    <a href="/">📊 Yourselfmedia<br>Tracker</a>
+    <a href="/"><span class="brand-mark">Y</span> Yourselfmedia<br>Tracker</a>
   </div>
   <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Overview</div>
     <a href="/dashboard" class="{{ 'active' if request.url.path == '/dashboard' else '' }}">📊 Dashboard</a>
     <a href="/reports" class="{{ 'active' if request.url.path.startswith('/reports') else '' }}">📈 Reports</a>
+    <div class="sidebar-section-label">Manage</div>
     <a href="/campaigns" class="{{ 'active' if request.url.path.startswith('/campaigns') else '' }}">🚀 Campaigns</a>
     <a href="/traffic-sources" class="{{ 'active' if request.url.path.startswith('/traffic-sources') else '' }}">📡 Traffic Sources</a>
     <a href="/landing-pages" class="{{ 'active' if request.url.path.startswith('/landing-pages') else '' }}">📄 Landing Pages</a>
     <a href="/offers" class="{{ 'active' if request.url.path.startswith('/offers') else '' }}">🎯 Offers</a>
     <a href="/tracking-domains" class="{{ 'active' if request.url.path.startswith('/tracking-domains') else '' }}">🌐 Domains</a>
     {% if request.session.get('is_admin') %}
+    <div class="sidebar-section-label">Admin</div>
     <a href="/admin/users" class="{{ 'active' if request.url.path.startswith('/admin') else '' }}">👥 Users</a>
     {% endif %}
   </nav>
@@ -39,7 +42,7 @@
 {% else %}
 <nav class="public-nav container-fluid">
   <ul>
-    <li><a href="/" class="brand-link"><strong>📊 Yourselfmedia Tracker</strong></a></li>
+    <li><a href="/" class="brand-link" style="display:flex;align-items:center;gap:0.6rem;"><span class="brand-mark" style="width:28px;height:28px;font-size:0.9rem;border-radius:8px;">Y</span><strong>Yourselfmedia Tracker</strong></a></li>
   </ul>
   <ul>
     <li><a href="/login">Log in</a></li>
