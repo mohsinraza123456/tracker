@@ -29,6 +29,10 @@ app = FastAPI(title="Yourselfmedia Tracker")
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax")
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# The marketing homepage (a downloaded static template) references its images/css/js
+# with plain relative paths like "assets/..." — mounting at /assets (rather than
+# nesting under /static) means those paths resolve unchanged from any of its pages.
+app.mount("/assets", StaticFiles(directory="app/landing_assets"), name="landing_assets")
 
 # Public: the landing page, login/register, and the tracking endpoints traffic
 # sources and offers hit directly.
