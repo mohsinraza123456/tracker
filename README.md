@@ -134,3 +134,15 @@ existing rows), then restart the app to apply it, or run
   sent there instead of the real offer/landing page, protecting the offer
   relationship from suspicious traffic. Leave it blank to keep the default
   behavior (bot clicks still reach the offer, just excluded from stats).
+- **Website Traffic** (`/sites`): separate from campaign click tracking —
+  connect any website (WordPress or otherwise) to see its visitors, live
+  traffic, and page views. Add a site, then use its **Get Code** modal to
+  either download a one-click WordPress plugin (Plugins → Add New → Upload
+  Plugin) or copy a `<script>` snippet for any other site. Each page load
+  pings `GET /collect` (a 1x1 pixel, so it works cross-origin with no CORS
+  setup) which records the URL, referrer, and the same GEO/device enrichment
+  used for clicks — no cookies are set; unique visitors are approximated via
+  a same-day hash of IP+User-Agent that can't be used to track someone across
+  days. A site's page shows an "online now" count (page views in the last 5
+  minutes, polled live), a views trend chart, and breakdowns by page,
+  referrer, device, and country.

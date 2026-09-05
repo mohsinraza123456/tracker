@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from datetime import datetime, timezone
 
@@ -33,6 +34,7 @@ class User(Base):
     offers: Mapped[list["Offer"]] = relationship(back_populates="user")
     tracking_domains: Mapped[list["TrackingDomain"]] = relationship(back_populates="user")
     campaigns: Mapped[list["Campaign"]] = relationship(back_populates="user")
+    sites: Mapped[list["Site"]] = relationship(back_populates="user")
 
 
 class TrafficSource(Base):
@@ -216,3 +218,51 @@ class Conversion(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     click: Mapped["Click"] = relationship(back_populates="conversions")
+
+
+class Site(Base):
+    """A website (e.g. a WordPress site) the user has embedded the analytics
+    snippet on, identified to incoming page views by its site_key."""
+
+    __tablename__ = "sites"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    domain: Mapped[str] = mapped_column(String(255), nullable=False)
+    site_key: Mapped[str] = mapped_column(
+        String(32), unique=True, nullable=False, default=lambda: secrets.token_hex(8)
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+    user: Mapped["User"] = relationship(back_populates="sites")
+    page_views: Mapped[list["PageView"]] = relationship(
+        back_populates="site", cascade="all, delete-orphan"
+    )
+
+
+class PageView(Base):
+    __tablename__ = "page_views"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    site_id: Mapped[int] = mapped_column(ForeignKey("sites.id"))
+    url: Mapped[str] = mapped_column(String(2000), nullable=False)
+    referrer: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    title: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    # daily-rotating pseudonymous id (hash of site+ip+UA+date) — enough to approximate
+    # unique visitors without storing anything reversible back to a real person.
+    visitor_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    country: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    region: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    device_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    os: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    browser: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    is_bot: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+    site: Mapped["Site"] = relationship(back_populates="page_views")

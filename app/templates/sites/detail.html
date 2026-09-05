@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}{{ site.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <hgroup>
+    <h2>{{ site.name }}</h2>
+    <p>{{ site.domain }}</p>
+  </hgroup>
+  <a href="#" role="button" onclick="document.getElementById('wp-modal-{{ site.id }}').showModal(); return false;">Get Code</a>
+</div>
+
+<form method="get" action="/sites/{{ site.id }}">
+  <div class="grid">
+    <label>From <input type="date" name="start" value="{{ start }}"></label>
+    <label>To <input type="date" name="end" value="{{ end }}"></label>
+    <label>&nbsp;<button type="submit">Filter</button></label>
+  </div>
+</form>
+
+<div class="stat-grid">
+  <div class="stat-tile">
+    <div class="stat-icon icon-conversions">🟢</div>
+    <div>
+      <div class="stat-label">Online now</div>
+      <div class="stat-value" id="online-now-value">{{ online_now }}</div>
+    </div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-icon icon-clicks">👁️</div>
+    <div>
+      <div class="stat-label">Page views</div>
+      <div class="stat-value">{{ total_views }}</div>
+    </div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-icon icon-revenue">🧑</div>
+    <div>
+      <div class="stat-label">Unique visitors</div>
+      <div class="stat-value">{{ unique_visitors }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="chart-card" style="margin-bottom:1.5rem;">
+  <h4>Page views</h4>
+  {{ views_chart_svg | safe }}
+</div>
+
+<div class="grid">
+  <div>
+    <h3>Top Pages</h3>
+    <div class="table-scroll">
+    <table class="stats">
+      <thead><tr><th>Page</th><th>Views</th><th>Visitors</th></tr></thead>
+      <tbody>
+        {% for row in top_pages %}
+        <tr><td>{{ row.key }}</td><td>{{ row.views }}</td><td>{{ row.visitors }}</td></tr>
+        {% else %}
+        <tr><td colspan="3"><em>No page views yet.</em></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <div>
+    <h3>Top Referrers</h3>
+    <div class="table-scroll">
+    <table class="stats">
+      <thead><tr><th>Referrer</th><th>Views</th><th>Visitors</th></tr></thead>
+      <tbody>
+        {% for row in top_referrers %}
+        <tr><td>{{ row.key }}</td><td>{{ row.views }}</td><td>{{ row.visitors }}</td></tr>
+        {% else %}
+        <tr><td colspan="3"><em>No page views yet.</em></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<div class="grid">
+  <div>
+    <h3>Devices</h3>
+    <div class="table-scroll">
+    <table class="stats">
+      <thead><tr><th>Device</th><th>Views</th><th>Visitors</th></tr></thead>
+      <tbody>
+        {% for row in by_device %}
+        <tr><td>{{ row.key }}</td><td>{{ row.views }}</td><td>{{ row.visitors }}</td></tr>
+        {% else %}
+        <tr><td colspan="3"><em>No page views yet.</em></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <div>
+    <h3>Countries</h3>
+    <div class="table-scroll">
+    <table class="stats">
+      <thead><tr><th>Country</th><th>Views</th><th>Visitors</th></tr></thead>
+      <tbody>
+        {% for row in by_country %}
+        <tr><td>{{ row.key }}</td><td>{{ row.views }}</td><td>{{ row.visitors }}</td></tr>
+        {% else %}
+        <tr><td colspan="3"><em>No page views yet.</em></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+{% if excluded_count %}
+<p><small>{{ excluded_count }} bot/script hit{{ "s" if excluded_count != 1 else "" }} excluded from these numbers in this date range.</small></p>
+{% endif %}
+
+<dialog id="wp-modal-{{ site.id }}">
+  <article style="max-width:560px;">
+    <header style="display:flex;align-items:center;justify-content:space-between;">
+      <span>Connect <strong>{{ site.name }}</strong></span>
+      <button type="button" class="secondary outline" style="width:auto;padding:0.2rem 0.7rem;margin:0;" aria-label="Close" onclick="document.getElementById('wp-modal-{{ site.id }}').close();">✕</button>
+    </header>
+    <p>Add the tracker to <strong>{{ site.domain }}</strong> using either method below.</p>
+
+    <h4>Option 1 &mdash; WordPress plugin (recommended)</h4>
+    <ol>
+      <li><a href="/sites/{{ site.id }}/plugin.zip" role="button" class="secondary">Download plugin (.zip)</a></li>
+      <li>In your WP admin: <strong>Plugins &rarr; Add New &rarr; Upload Plugin</strong>, choose the file, then <strong>Install</strong> and <strong>Activate</strong>.</li>
+    </ol>
+
+    <h4>Option 2 &mdash; Paste this snippet</h4>
+    <p><small>Works on any site. Paste before <code>&lt;/body&gt;</code>, e.g. via a "header/footer scripts" plugin if not using the WordPress plugin above.</small></p>
+    <div class="track-link" id="snippet-{{ site.id }}">&lt;script defer src="{{ base_url }}/t.js" data-site="{{ site.site_key }}"&gt;&lt;/script&gt;</div>
+    <button type="button" class="secondary" onclick="navigator.clipboard.writeText(document.getElementById('snippet-{{ site.id }}').innerText); this.innerText='Copied!'; setTimeout(() => { this.innerText='Copy snippet'; }, 1500);">Copy snippet</button>
+  </article>
+</dialog>
+
+<script>
+  (function () {
+    var el = document.getElementById('online-now-value');
+    if (!el) return;
+    setInterval(function () {
+      fetch('/sites/{{ site.id }}/live.json')
+        .then(function (r) { return r.json(); })
+        .then(function (data) { el.textContent = data.online; })
+        .catch(function () {});
+    }, 15000);
+  })();
+</script>
+{% endblock %}

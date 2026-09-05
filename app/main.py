@@ -7,12 +7,14 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import SECRET_KEY
 from app.routers import (
     campaigns,
+    collect,
     dashboard,
     home,
     landing_pages,
     login,
     offers,
     reports,
+    sites,
     traffic_sources,
     tracking,
     tracking_domains,
@@ -33,6 +35,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(home.router)
 app.include_router(login.router)
 app.include_router(tracking.router)
+app.include_router(collect.router)
 
 # Everything else enforces login (and, for users_admin, admin rights) via a
 # Depends(get_current_user)/Depends(require_admin) parameter on each handler —
@@ -40,6 +43,7 @@ app.include_router(tracking.router)
 app.include_router(dashboard.router)
 app.include_router(reports.router)
 app.include_router(campaigns.router)
+app.include_router(sites.router)
 app.include_router(traffic_sources.router)
 app.include_router(landing_pages.router)
 app.include_router(offers.router)

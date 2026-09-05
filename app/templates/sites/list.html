@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Website Traffic{% endblock %}
+{% block content %}
+<div class="page-header">
+  <hgroup>
+    <h2>Website Traffic</h2>
+    <p>See live visitors, page views, and traffic sources for any website you connect.</p>
+  </hgroup>
+  <a href="/sites/new" role="button">+ Add Site</a>
+</div>
+<div class="hint-box">
+  Add a site, then hit <em>Get Code</em> to install the tracker on it &mdash; a one-click
+  WordPress plugin, or a snippet you can paste into any site.
+</div>
+
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Site</th><th>Domain</th><th>Online now</th><th>Views today</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for s in sites %}
+    <tr>
+      <td><a href="/sites/{{ s.id }}">{{ s.name }}</a></td>
+      <td>{{ s.domain }}</td>
+      <td>
+        {% if online_now.get(s.id, 0) > 0 %}
+        <span class="badge badge-active">🟢 {{ online_now.get(s.id, 0) }}</span>
+        {% else %}
+        <span class="badge badge-inactive">0</span>
+        {% endif %}
+      </td>
+      <td>{{ views_today.get(s.id, 0) }}</td>
+      <td class="actions">
+        <a href="/sites/{{ s.id }}">Stats</a>
+        <a href="#" onclick="document.getElementById('wp-modal-{{ s.id }}').showModal(); return false;">Get Code</a>
+        <a href="/sites/{{ s.id }}/edit">Edit</a>
+        <a href="/sites/{{ s.id }}/delete" onclick="return confirm('Delete this site and all its page view history?')">Delete</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5"><em>No sites yet. <a href="/sites/new">Add your first site</a> to start tracking visitors.</em></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% for s in sites %}
+<dialog id="wp-modal-{{ s.id }}">
+  <article style="max-width:560px;">
+    <header style="display:flex;align-items:center;justify-content:space-between;">
+      <span>Connect <strong>{{ s.name }}</strong></span>
+      <button type="button" class="secondary outline" style="width:auto;padding:0.2rem 0.7rem;margin:0;" aria-label="Close" onclick="document.getElementById('wp-modal-{{ s.id }}').close();">✕</button>
+    </header>
+    <p>Add the tracker to <strong>{{ s.domain }}</strong> using either method below.</p>
+
+    <h4>Option 1 &mdash; WordPress plugin (recommended)</h4>
+    <ol>
+      <li><a href="/sites/{{ s.id }}/plugin.zip" role="button" class="secondary">Download plugin (.zip)</a></li>
+      <li>In your WP admin: <strong>Plugins &rarr; Add New &rarr; Upload Plugin</strong>, choose the file, then <strong>Install</strong> and <strong>Activate</strong>.</li>
+    </ol>
+
+    <h4>Option 2 &mdash; Paste this snippet</h4>
+    <p><small>Works on any site. Paste before <code>&lt;/body&gt;</code>, e.g. via a "header/footer scripts" plugin if not using WordPress plugin above.</small></p>
+    <div class="track-link" id="snippet-{{ s.id }}">&lt;script defer src="{{ base_url }}/t.js" data-site="{{ s.site_key }}"&gt;&lt;/script&gt;</div>
+    <button type="button" class="secondary" onclick="navigator.clipboard.writeText(document.getElementById('snippet-{{ s.id }}').innerText); this.innerText='Copied!'; setTimeout(() => { this.innerText='Copy snippet'; }, 1500);">Copy snippet</button>
+  </article>
+</dialog>
+{% endfor %}
+{% endblock %}

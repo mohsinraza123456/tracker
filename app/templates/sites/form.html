@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit" if site else "New" }} Site{% endblock %}
+{% block content %}
+<h2>{{ "Edit" if site else "New" }} Site</h2>
+<form method="post" action="{{ '/sites/%d/edit' % site.id if site else '/sites/new' }}">
+  <label>Name
+    <input type="text" name="name" required value="{{ site.name if site else '' }}" placeholder="My WordPress Blog">
+  </label>
+  <label>Domain
+    <input type="text" name="domain" required value="{{ site.domain if site else '' }}" placeholder="example.com">
+  </label>
+  <small>After saving, hit <strong>Get Code</strong> on the sites list to install the tracker on this domain.</small>
+  <br><br>
+  <button type="submit">Save</button>
+  <a href="/sites" role="button" class="secondary">Cancel</a>
+</form>
+{% endblock %}

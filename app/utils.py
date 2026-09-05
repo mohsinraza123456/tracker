@@ -1,4 +1,6 @@
+import hashlib
 import random
+from datetime import date
 from typing import TYPE_CHECKING, TypeVar
 from urllib.parse import quote, urlencode, urlparse, parse_qsl, urlunparse
 
@@ -6,6 +8,16 @@ if TYPE_CHECKING:
     from app.models import Click
 
 T = TypeVar("T")
+
+
+def visitor_hash(site_key: str, ip: str | None, user_agent: str | None) -> str:
+    """A pseudonymous, non-reversible id for approximate unique-visitor counting.
+    Rotates daily (rather than being a stable fingerprint) so it can't be used to
+    track a person across days — good enough to dedupe "how many people today",
+    not a substitute for a real analytics cookie/session id.
+    """
+    raw = f"{site_key}|{ip or ''}|{user_agent or ''}|{date.today().isoformat()}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
 def weighted_choice(options: list[tuple[T, int]]) -> T | None:
