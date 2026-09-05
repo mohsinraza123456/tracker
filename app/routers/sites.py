@@ -156,11 +156,11 @@ def download_wordpress_plugin(
     site_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     site = _get_owned_site(db, site_id, current_user.id)
-    slug = "yourselfmedia-tracker"
+    slug = "yourself-tracker"
     plugin_php = f"""<?php
 /**
- * Plugin Name: Yourselfmedia Tracker
- * Description: Sends page view analytics for this site to your Yourselfmedia Tracker dashboard ({site.name}).
+ * Plugin Name: YourSelf Tracker
+ * Description: Sends page view analytics for this site to your YourSelf Tracker dashboard ({site.name}).
  * Version: 1.0.0
  */
 

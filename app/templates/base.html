@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}Yourselfmedia Tracker{% endblock %}</title>
+  <title>{% block title %}YourSelf Tracker{% endblock %}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -11,7 +11,7 @@
 {% if request.session.get('user') %}
 <aside class="sidebar">
   <div class="sidebar-brand">
-    <a href="/"><span class="brand-mark">Y</span> Yourselfmedia<br>Tracker</a>
+    <a href="/"><span class="brand-mark">Y</span> YourSelf<br>Tracker</a>
   </div>
   <nav class="sidebar-nav">
     <div class="sidebar-section-label">Overview</div>
@@ -43,7 +43,7 @@
 {% else %}
 <nav class="public-nav container-fluid">
   <ul>
-    <li><a href="/" class="brand-link" style="display:flex;align-items:center;gap:0.6rem;"><span class="brand-mark" style="width:28px;height:28px;font-size:0.9rem;border-radius:8px;">Y</span><strong>Yourselfmedia Tracker</strong></a></li>
+    <li><a href="/" class="brand-link" style="display:flex;align-items:center;gap:0.6rem;"><span class="brand-mark" style="width:28px;height:28px;font-size:0.9rem;border-radius:8px;">Y</span><strong>YourSelf Tracker</strong></a></li>
   </ul>
   <ul>
     <li><a href="/login">Log in</a></li>

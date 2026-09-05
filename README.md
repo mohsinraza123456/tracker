@@ -1,4 +1,4 @@
-# Yourselfmedia Tracker
+# YourSelf Tracker
 
 A self-hosted performance-marketing click tracker (à la CPV Lab): track clicks
 from traffic sources through optional landing pages to offers, record
