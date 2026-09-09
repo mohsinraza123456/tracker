@@ -55,10 +55,12 @@ requests and renews the Let's Encrypt certificate itself, no certbot/nginx
 config needed. `docker-compose.yml` (Postgres only) is for local dev;
 `docker-compose.prod.yml` is the full stack described here.
 
-1. **Point DNS first.** In whichever DNS panel manages `yourselfmedia.com`,
-   add an A record for `clicktracker` → your VPS's public IP. Caddy can't get
-   a certificate until this resolves, so give it a few minutes to propagate
-   before step 5.
+1. **Point DNS first.** In whichever DNS panel manages `yourselfmedia.in`,
+   add an A record for `@` (the root/apex domain) → your VPS's public IP —
+   and, if you also want `www.yourselfmedia.in` to work, a matching A record
+   (or CNAME to the apex) for `www` plus a `www.` line in the `Caddyfile`.
+   Caddy can't get a certificate until DNS resolves, so give it a few minutes
+   to propagate before step 5.
 
 2. **SSH into the VPS** and install Docker (skip if already installed):
 
@@ -83,7 +85,7 @@ config needed. `docker-compose.yml` (Postgres only) is for local dev;
    Fill in every placeholder — a real `POSTGRES_PASSWORD` (matched into
    `DATABASE_URL`), `ADMIN_PASSWORD`, and a `SECRET_KEY` (generate with
    `python3 -c "import secrets; print(secrets.token_hex(32))"`). `BASE_URL`
-   should already read `https://clicktracker.yourselfmedia.com`.
+   should already read `https://yourselfmedia.in`.
 
 5. **Open the firewall and start the stack:**
 
@@ -94,7 +96,7 @@ config needed. `docker-compose.yml` (Postgres only) is for local dev;
 
    First boot builds the app image, brings up Postgres, runs
    `alembic upgrade head` automatically, and Caddy issues the TLS
-   certificate — give it a minute, then check https://clicktracker.yourselfmedia.com.
+   certificate — give it a minute, then check https://yourselfmedia.in.
 
 6. **Useful commands going forward:**
 
