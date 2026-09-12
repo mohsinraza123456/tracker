@@ -27,6 +27,16 @@ def terms_and_conditions(request: Request):
     return templates.TemplateResponse("terms-and-condition.html", {"request": request})
 
 
+@router.get("/about-us.html")
+def about_us(request: Request):
+    return templates.TemplateResponse("about-us.html", {"request": request})
+
+
+@router.get("/contact-us.html")
+def contact_us(request: Request):
+    return templates.TemplateResponse("contact-us.html", {"request": request})
+
+
 @router.get("/robots.txt")
 def robots_txt():
     return FileResponse("seo/robots.txt", media_type="text/plain")
